@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  LEARNER
+  TEACHER
+  ADMIN
+}
+
+enum VerificationStatus {
+  INCOMPLETE // profile not yet submitted
+  PENDING    // submitted, waiting for admin review
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String          @id @default(cuid())
+  name         String
+  email        String          @unique
+  phone        String?
+  passwordHash String
+  role         Role            @default(LEARNER)
+  createdAt    DateTime        @default(now())
+  teacher      TeacherProfile?
+}
+
+model TeacherProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  skill        String   // main skill, e.g. "Tailoring"
+  otherSkills  String[] // extra tags
+  bio          String
+  phone        String
+  whatsapp     String?
+  businessName String?
+
+  // Pinned location of the place of trade
+  latitude  Float
+  longitude Float
+  address   String
+
+  // Verification documents (URLs to uploaded files)
+  idNumber      String
+  idPhotoUrl    String
+  profilePhotoUrl String
+  premisesPhotoUrls String[]
+
+  status          VerificationStatus @default(INCOMPLETE)
+  rejectionReason String?
+  verifiedAt      DateTime?
+
+  // Subscription: free trial starts when the profile is approved,
+  // then each KES 500 payment extends paidUntil by 30 days.
+  trialEndsAt DateTime?
+  paidUntil   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  payments  Payment[]
+
+  @@index([status])
+  @@index([latitude, longitude])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  teacherId         String
+  teacher           TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  amount            Int
+  phone             String
+  status            PaymentStatus @default(PENDING)
+  checkoutRequestId String?       @unique
+  mpesaReceipt      String?
+  resultDesc        String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
