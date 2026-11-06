@@ -12,19 +12,19 @@ remove the financial and physical barriers to learning.
 ## Tech
 
 Next.js 15 (App Router) · PostgreSQL + Prisma · NextAuth (email + password) · Google Maps JavaScript API ·
-Vercel Blob for photos · Safaricom Daraja (M-Pesa STK push) for teacher subscriptions.
+photos on disk (or Vercel Blob) · Safaricom Daraja (M-Pesa STK push) for teacher subscriptions.
 
 ## Run it locally
 
 ```bash
 cp .env.example .env        # fill in DATABASE_URL and NEXTAUTH_SECRET at minimum
 npm install
-npm run db:push             # creates the tables
+npm run db:migrate          # creates the tables
 npm run dev                 # http://localhost:3000
 ```
 
 Without a Google Maps key the map is hidden, but location still works through the browser's "use my location".
-Without Blob credentials, photos are stored in `.uploads/` on disk. Without M-Pesa credentials, the pay button
+Without Blob credentials, photos are stored on disk in `UPLOAD_DIR` (default `.uploads/`). Without M-Pesa credentials, the pay button
 shows "payments are not set up yet".
 
 To make yourself an admin (to approve teachers), register normally and then run:
@@ -33,23 +33,39 @@ To make yourself an admin (to approve teachers), register normally and then run:
 npm run make-admin -- you@example.com
 ```
 
-## Deploy (recommended: Vercel + Neon)
+## Deploy on RumptyCloud
 
-1. **Database**: create a free Postgres database on [Neon](https://neon.tech) (or Supabase / Railway) and copy the
-   connection string.
-2. **Vercel**: import this GitHub repo at [vercel.com/new](https://vercel.com/new). Framework is detected
-   automatically.
-3. **Photo storage**: in the Vercel project, go to Storage → create a **Blob** store and connect it. This adds
-   `BLOB_READ_WRITE_TOKEN` for you.
-4. **Environment variables** (Project → Settings → Environment Variables), see `.env.example`:
+The repo includes a `Dockerfile`. On every start the container applies database migrations
+(`prisma migrate deploy`) and then serves the app on `$PORT`.
+
+1. **Database**: in the RumptyCloud console go to **Data → Databases → Create database**, pick **Postgres**
+   (the free Playground plan is fine to start), and copy its connection string.
+2. **Deployment**: go to **Compute → Deployments → New deployment**, connect GitHub, and pick this repo and the
+   `main` branch.
+   - Application type: **Web Service / Backend**
+   - Build method: **Dockerfile**
+   - Port: **8080** (the default). Readiness path: `/`
+   - Tick **Add persistent storage**, mount path **`/data`**, 1 GB to start. Teacher photos are saved there
+     (`UPLOAD_DIR=/data/uploads` is already set in the image). Without it, photos are wiped on every deploy.
+3. **Environment variables** (the deployment's Env tab), see `.env.example`:
    - `DATABASE_URL`: from step 1
-   - `NEXTAUTH_SECRET`: run `openssl rand -base64 32`
-   - `NEXTAUTH_URL`: your site URL, e.g. `https://ujuzilink.vercel.app`
-   - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: from Google Cloud Console with **Maps JavaScript API** enabled. Restrict it
-     to your domain.
+   - `NEXTAUTH_SECRET`: a long random string (`openssl rand -base64 32`)
+   - `NEXTAUTH_URL`: the site's address, e.g. `https://ujuzilink.<your-rumpty-domain>` or your own domain
+   - `GOOGLE_MAPS_API_KEY`: Google Maps JavaScript API key, restricted to your domain in Google Cloud Console
    - M-Pesa variables (below)
-5. **Create the tables** once, from your computer: `DATABASE_URL="..." npx prisma db push`
-6. Deploy, register your own account, and run `make-admin` against the production database.
+4. Deploy. Pushes to `main` redeploy automatically.
+5. Register your own account on the live site, then make yourself admin from the deployment's shell (or
+   `rumpty exec`): `node scripts/make-admin.mjs you@example.com`
+6. Optional: add a custom domain such as `www.ujuzilink.co.ke` (RumptyCloud supports subdomains, not bare root
+   domains yet) and update `NEXTAUTH_URL` and `MPESA_CALLBACK_URL` to match.
+
+RumptyCloud injects env vars only at runtime, so the app reads every setting (including the Maps key) when it
+starts rather than at build time.
+
+### Other hosts
+
+The same Docker image runs on any container host (Railway, Render, Fly.io, a VPS). On Vercel, skip the Dockerfile,
+set `BLOB_READ_WRITE_TOKEN` for photo storage, and run `npx prisma migrate deploy` once against the database.
 
 ### M-Pesa (teacher subscriptions)
 

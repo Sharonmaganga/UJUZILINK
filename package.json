@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
+    "db:migration": "prisma migrate dev",
     "make-admin": "node scripts/make-admin.mjs",
     "postinstall": "prisma generate"
   },

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePublicConfig } from "./Providers";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
@@ -9,10 +10,9 @@ declare global {
   }
 }
 
-export const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
-
 /** Loads the Google Maps JavaScript API once and reports when it is ready. */
 export function useGoogleMaps() {
+  const { mapsKey: MAPS_KEY } = usePublicConfig();
   const [ready, setReady] = useState(typeof window !== "undefined" && !!window.google?.maps);
   const [error, setError] = useState(MAPS_KEY ? "" : "Map unavailable: Google Maps API key not set");
 
@@ -32,7 +32,7 @@ export function useGoogleMaps() {
       });
     }
     window.__ujuziMapsLoading.then(() => setReady(true)).catch((e: Error) => setError(e.message));
-  }, []);
+  }, [MAPS_KEY]);
 
   return { ready, error };
 }
