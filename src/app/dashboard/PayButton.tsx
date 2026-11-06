@@ -29,7 +29,7 @@ export default function PayButton({ defaultPhone, price }: { defaultPhone: strin
         <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" />
       </label>
       <div>
-        <button className="btn" onClick={pay} disabled={loading}>
+        <button className="btn brand" onClick={pay} disabled={loading}>
           {loading ? "Sending request..." : `Pay KES ${price} with M-Pesa`}
         </button>
       </div>

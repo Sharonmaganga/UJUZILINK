@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import SignOutButton from "./SignOutButton";
+import Logo from "./Logo";
 
 export default async function Nav() {
   const session = await getSession();
@@ -8,20 +9,26 @@ export default async function Nav() {
   return (
     <header className="nav">
       <div className="container nav-inner">
-        <Link href="/" className="logo">
-          Ujuzi<span>Link</span>
+        <Link href="/" className="logo" aria-label="Ujuzi Link home">
+          <Logo />
         </Link>
+        <form action="/search" className="nav-search" role="search">
+          <span aria-hidden>🔍</span>
+          <input name="q" placeholder="Search for a skill to learn" aria-label="Search for a skill" />
+        </form>
         <nav className="nav-links">
-          <Link href="/search">Find a teacher</Link>
-          {role === "TEACHER" && <Link href="/dashboard">My dashboard</Link>}
+          <Link href="/search" className="hide-sm">
+            Find a teacher
+          </Link>
+          {role === "TEACHER" && <Link href="/dashboard">Dashboard</Link>}
           {role === "ADMIN" && <Link href="/admin">Admin</Link>}
           {session ? (
             <SignOutButton />
           ) : (
             <>
-              <Link href="/login">Sign in</Link>
-              <Link href="/register?role=TEACHER" className="btn">
-                Teach a skill
+              <Link href="/login">Log in</Link>
+              <Link href="/register" className="btn join">
+                Join for free
               </Link>
             </>
           )}

@@ -9,7 +9,7 @@ export default async function LoginPage({
   // Only allow redirects back into this site.
   const callbackUrl = sp.callbackUrl?.startsWith("/") && !sp.callbackUrl.startsWith("//") ? sp.callbackUrl : "/";
   return (
-    <div className="container narrow">
+    <div className="auth-wrap">
       <LoginForm callbackUrl={callbackUrl} registered={sp.registered === "1"} />
     </div>
   );

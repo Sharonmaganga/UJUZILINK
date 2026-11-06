@@ -50,6 +50,7 @@ export async function GET(req: Request) {
       latitude: true,
       longitude: true,
       profilePhotoUrl: true,
+      premisesPhotoUrls: true,
       user: { select: { name: true } },
     },
     take: 500,
@@ -67,6 +68,7 @@ export async function GET(req: Request) {
       latitude: t.latitude,
       longitude: t.longitude,
       profilePhotoUrl: t.profilePhotoUrl,
+      coverUrl: t.premisesPhotoUrls[0] ?? null,
       distanceKm: Math.round(distanceKm(lat, lng, t.latitude, t.longitude) * 10) / 10,
     }))
     .filter((t) => t.distanceKm <= radius)
