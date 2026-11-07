@@ -26,8 +26,11 @@ export default function LoginForm({ callbackUrl, registered }: { callbackUrl: st
   }
 
   return (
-    <form className="card stack" onSubmit={onSubmit}>
-      <h1>Sign in</h1>
+    <form className="card stack auth-card" onSubmit={onSubmit}>
+      <div>
+        <h1 style={{ marginBottom: 4 }}>Welcome back</h1>
+        <p className="muted" style={{ margin: 0 }}>Log in to contact teachers and manage your profile.</p>
+      </div>
       {registered && <div className="alert ok">Account created. Sign in to continue.</div>}
       {error && <div className="alert">{error}</div>}
       <label>
@@ -38,11 +41,11 @@ export default function LoginForm({ callbackUrl, registered }: { callbackUrl: st
         Password
         <input name="password" type="password" required autoComplete="current-password" />
       </label>
-      <button className="btn" disabled={loading}>
-        {loading ? "Signing in..." : "Sign in"}
+      <button className="btn brand lg block" disabled={loading}>
+        {loading ? "Logging in..." : "Log in"}
       </button>
       <p className="small muted">
-        New here? <Link href="/register">Create a free account</Link>
+        New here? <Link href="/register" className="link">Join for free</Link>
       </p>
     </form>
   );

@@ -50,6 +50,6 @@ export default function TeacherMap({
     if (teachers.length) map.current.fitBounds(bounds, 60);
   }, [ready, center, teachers, onSelect]);
 
-  if (error) return <div className="map small card muted small">{error}</div>;
+  if (error) return <div className="map map-off muted small">🗺️<br />{error}</div>;
   return <div ref={el} className="map" />;
 }
