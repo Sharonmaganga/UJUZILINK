@@ -18,42 +18,47 @@ export default async function Dashboard() {
   if (!session) redirect("/login?callbackUrl=/dashboard");
   if (session.user.role !== "TEACHER") redirect(session.user.role === "ADMIN" ? "/admin" : "/search");
 
-  const teacher = await prisma.teacherProfile.findUnique({
-    where: { userId: session.user.id },
-    include: { payments: { orderBy: { createdAt: "desc" }, take: 12 } },
-  });
+  const [teacher, draft] = await Promise.all([
+    prisma.teacherProfile.findUnique({
+      where: { userId: session.user.id },
+      include: { payments: { orderBy: { createdAt: "desc" }, take: 12 } },
+    }),
+    prisma.teacherDraft.findUnique({ where: { userId: session.user.id }, select: { updatedAt: true } }),
+  ]);
   const first = session.user.name?.split(" ")[0] ?? "there";
 
   if (!teacher) {
     return (
-      <Shell title="Your workspace" items={teacherNav()} active="overview">
+      <Shell title="Teacher workspace" items={teacherNav()} active="overview">
         <div className="shell-head">
           <div>
             <h1>Welcome, {first}</h1>
-            <p className="muted">Set up your profile to be listed for learners near you.</p>
+            <p className="muted">Get verified to be listed for learners near you.</p>
           </div>
         </div>
         <div className="grid-2" style={{ alignItems: "start" }}>
           <div className="card stack">
             <span className="icon-tile amber"><Icon name="shield" /></span>
-            <h2>Get verified in one go</h2>
-            <p className="muted" style={{ margin: 0 }}>Have these ready. It takes about 10 minutes on your phone.</p>
+            <h2>{draft ? "Continue your verification" : "Get verified in five short steps"}</h2>
+            <p className="muted" style={{ margin: 0 }}>
+              {draft ? `Your progress was saved on ${fmtDate(draft.updatedAt)}. Pick up where you left off.` : "Have these ready. It takes about 10 minutes on your phone."}
+            </p>
             <ul className="checklist">
               <li><span className="tick" /> Your national ID or passport (and a photo of it)</li>
               <li><span className="tick" /> A clear photo of yourself</li>
-              <li><span className="tick" /> 1–6 photos of your premises or work</li>
               <li><span className="tick" /> Your place of trade pinned on the map</li>
+              <li><span className="tick" /> 1–6 photos of your premises or work</li>
             </ul>
             <div>
               <Link href="/dashboard/profile" className="btn lg">
-                Set up my teacher profile <Icon name="arrow" />
+                {draft ? "Continue where I left off" : "Start verification"} <Icon name="arrow" />
               </Link>
             </div>
           </div>
           <div className="card soft stack">
             <h3>What happens next</h3>
             <ol className="timeline">
-              <li className="current"><span className="tl-dot">1</span><div><strong>Submit your profile</strong><span className="d">ID, photos and location</span></div></li>
+              <li className="current"><span className="tl-dot">1</span><div><strong>Submit your profile</strong><span className="d">Details, ID, location and photos</span></div></li>
               <li><span className="tl-dot">2</span><div><strong>We review it</strong><span className="d">Usually within 2 working days</span></div></li>
               <li><span className="tl-dot">3</span><div><strong>{TRIAL_DAYS} days free</strong><span className="d">Your listing goes live on approval</span></div></li>
             </ol>
@@ -69,44 +74,44 @@ export default async function Dashboard() {
   const inTrial = !!teacher.trialEndsAt && teacher.trialEndsAt > now && !(teacher.paidUntil && teacher.paidUntil > teacher.trialEndsAt);
   const left = daysLeft(until, now);
   const approved = teacher.status === "APPROVED";
+  const live = approved && active;
 
-  // Required items are enforced by the API; recommended ones make a profile more convincing.
-  const recommended = [
-    { label: "3 or more premises / work photos", ok: teacher.premisesPhotoUrls.length >= 3 },
-    { label: "A detailed bio (120+ characters)", ok: teacher.bio.length >= 120 },
-    { label: "Other skills you teach", ok: teacher.otherSkills.length > 0 },
+  // Required items are enforced at submission; recommended ones make a profile more convincing.
+  const items = [
+    { label: "Skill, introduction and phone", ok: !!teacher.skill && teacher.bio.length >= 20 && !!teacher.phone },
+    { label: "ID and profile photo", ok: !!teacher.idPhotoUrl && !!teacher.profilePhotoUrl },
+    { label: "Location pinned", ok: Number.isFinite(teacher.latitude) },
+    { label: "Premises photo", ok: teacher.premisesPhotoUrls.length > 0 },
+    { label: "3 or more work photos", ok: teacher.premisesPhotoUrls.length >= 3 },
+    { label: "Detailed introduction (120+ characters)", ok: teacher.bio.length >= 120 },
+    { label: "Other skills", ok: teacher.otherSkills.length > 0 },
     { label: "Business name", ok: !!teacher.businessName },
     { label: "WhatsApp number", ok: !!teacher.whatsapp },
   ];
-  const required = [
-    { label: "Skill and bio", ok: !!teacher.skill && teacher.bio.length >= 20 },
-    { label: "Phone number", ok: !!teacher.phone },
-    { label: "Location pinned", ok: Number.isFinite(teacher.latitude) },
-    { label: "ID number and photo", ok: !!teacher.idNumber && !!teacher.idPhotoUrl },
-    { label: "Profile photo", ok: !!teacher.profilePhotoUrl },
-    { label: "Premises photo", ok: teacher.premisesPhotoUrls.length > 0 },
-  ];
-  const all = [...required, ...recommended];
-  const pct = Math.round((all.filter((i) => i.ok).length / all.length) * 100);
+  const pct = Math.round((items.filter((i) => i.ok).length / items.length) * 100);
+  const nextFix = items.find((i) => !i.ok);
 
-  const verifyStep = (s: "submitted" | "review" | "done") => {
-    const order = { PENDING: 1, APPROVED: 2, REJECTED: 1, INCOMPLETE: 0 }[teacher.status];
-    const idx = { submitted: 0, review: 1, done: 2 }[s];
-    if (teacher.status === "REJECTED" && idx === 1) return "failed";
-    return idx < order || (idx === 2 && approved) ? "done" : idx === order ? "current" : "";
-  };
+  const ready = [
+    {
+      ok: approved,
+      text: approved ? "Identity and premises approved" : teacher.status === "REJECTED" ? `Changes requested: ${teacher.rejectionReason ?? "see your profile"}` : "Identity and premises under review",
+      href: "/dashboard/profile?step=5",
+    },
+    { ok: live, text: live ? "Listing visible to nearby learners" : approved ? "Listing hidden: renew to be visible again" : "Listing goes live once you're approved", href: "#subscription" },
+    { ok: teacher.premisesPhotoUrls.length >= 3, text: teacher.premisesPhotoUrls.length >= 3 ? `${teacher.premisesPhotoUrls.length} work photos on your profile` : "Add more work photos to strengthen your profile", href: "/dashboard/profile?step=4" },
+    { ok: !!teacher.whatsapp, text: teacher.whatsapp ? "WhatsApp contact added" : "Add a WhatsApp number so learners can message you", href: "/dashboard/profile?step=1" },
+  ];
 
   return (
-    <Shell title="Your workspace" items={teacherNav(teacher.id)} active="overview">
+    <Shell title="Teacher workspace" items={teacherNav(teacher.id)} active="overview">
       <div className="shell-head">
         <div>
-          <h1>Hello, {first}</h1>
+          <h1>Teacher workspace</h1>
           <p className="muted">Manage your profile, verification and listing.</p>
         </div>
-        <div className="row">
-          <Link href={`/teachers/${teacher.id}`} className="btn secondary sm"><Icon name="eye" /> View public page</Link>
-          <Link href="/dashboard/profile" className="btn sm"><Icon name="user" /> Edit profile</Link>
-        </div>
+        <Link href={`/teachers/${teacher.id}`} className="btn secondary sm">
+          Preview profile <Icon name="arrowUpRight" />
+        </Link>
       </div>
 
       {teacher.status === "REJECTED" && (
@@ -114,7 +119,7 @@ export default async function Dashboard() {
           <Icon name="alert" />
           <div>
             <strong>Your profile needs changes</strong>
-            <p>{teacher.rejectionReason ?? "Your documents could not be verified."} Update your profile and it will go back for review.</p>
+            <p>{teacher.rejectionReason ?? "Your documents could not be verified."} <Link href="/dashboard/profile?step=1" className="link">Update and resubmit</Link></p>
           </div>
         </div>
       )}
@@ -128,91 +133,66 @@ export default async function Dashboard() {
         </div>
       )}
 
-      <div className="grid-4" style={{ marginBottom: 16 }}>
+      <div className="grid-3" style={{ marginBottom: 16 }}>
         <div className="card tight stat">
           <span className="label">Verification</span>
-          <span className="value" style={{ fontSize: "1.25rem" }}>
+          <span className={`value tone-text ${approved ? "" : teacher.status === "REJECTED" ? "bad" : "wait"}`}>
             {{ APPROVED: "Approved", PENDING: "In review", REJECTED: "Changes needed", INCOMPLETE: "Incomplete" }[teacher.status]}
           </span>
-          <span className="sub">{approved && teacher.verifiedAt ? `Since ${fmtDate(teacher.verifiedAt)}` : "Reviewed by our team"}</span>
+          <span className="sub">{approved ? <><Icon name="check" /> Profile reviewed{teacher.verifiedAt ? ` · ${fmtDate(teacher.verifiedAt)}` : ""}</> : "Reviewed by our team"}</span>
         </div>
         <div className="card tight stat">
-          <span className="label">Plan</span>
-          <span className="value" style={{ fontSize: "1.25rem" }}>{!approved ? "Not started" : active ? (inTrial ? "Free trial" : "Paid") : "Expired"}</span>
-          <span className="sub">{approved && until ? `${active ? "Until" : "Ended"} ${fmtDate(until)}` : `Starts on approval`}</span>
+          <span className="label">Subscription</span>
+          <span className={`value tone-text ${!approved ? "wait" : active ? "" : "bad"}`}>{!approved ? "Not started" : active ? (inTrial ? "Free trial" : "Paid") : "Expired"}</span>
+          <span className="sub">{!approved ? `${TRIAL_DAYS} days free on approval` : active ? `${left} day${left === 1 ? "" : "s"} remaining` : until ? `Ended ${fmtDate(until)}` : ""}</span>
         </div>
         <div className="card tight stat">
-          <span className="label">Days left</span>
-          <span className="value">{approved ? left : "–"}</span>
-          <span className="sub">{inTrial ? "of your free month" : "on your listing"}</span>
-        </div>
-        <div className="card tight stat">
-          <span className="label">Listing</span>
-          <span className="value" style={{ fontSize: "1.25rem" }}>{approved && active ? "Live in search" : "Hidden"}</span>
-          <span className="sub">{approved && active ? "Learners can find you" : "Not shown to learners"}</span>
+          <span className="label">Visibility</span>
+          <span className={`value tone-text ${live ? "" : "wait"}`}>{live ? "Featured" : "Hidden"}</span>
+          <span className="sub">{live ? "Visible to learners" : "Not shown in search"}</span>
         </div>
       </div>
 
-      <div className="grid-2" style={{ alignItems: "start", marginBottom: 16 }}>
+      <div className="dash-row" style={{ marginBottom: 16 }}>
         <section className="card" aria-labelledby="complete-h">
-          <div className="card-head">
-            <div>
-              <h2 id="complete-h">Profile strength</h2>
-              <p className="muted small" style={{ margin: "4px 0 0" }}>Complete profiles get more calls.</p>
-            </div>
-            <strong className="tnum" style={{ fontSize: "1.4rem", color: "var(--forest)" }}>{pct}%</strong>
-          </div>
+          <h2 id="complete-h">Your profile</h2>
+          <p className="muted small" style={{ margin: "4px 0 18px" }}>Help learners understand what you teach.</p>
           <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Profile completion">
             <span style={{ width: `${pct}%` }} />
           </div>
-          <ul className="checklist" style={{ marginTop: 18 }}>
-            {all.map((i) => (
-              <li key={i.label} className={i.ok ? "ok" : ""}>
-                <span className="tick"><Icon name="check" /></span>
-                {i.label}
-              </li>
-            ))}
-          </ul>
-          {pct < 100 && (
-            <Link href="/dashboard/profile" className="btn secondary sm" style={{ marginTop: 18 }}>
-              Improve profile
-            </Link>
-          )}
+          <p className="strong small" style={{ color: "var(--forest)", margin: "10px 0 16px" }}>
+            {pct}% complete{nextFix ? <span className="muted" style={{ fontWeight: 500 }}> · Next: {nextFix.label.toLowerCase()}</span> : null}
+          </p>
+          <Link href="/dashboard/profile?step=1" className="btn sm">
+            {pct < 100 ? "Complete profile" : "Edit profile"} <Icon name="arrow" />
+          </Link>
         </section>
 
-        <section className="card" aria-labelledby="verify-h">
-          <div className="card-head">
-            <h2 id="verify-h">Verification</h2>
-            <span className={`badge ${approved ? "green" : teacher.status === "REJECTED" ? "red" : "amber"}`}>
-              {approved ? <><Icon name="shield" /> Verified</> : teacher.status === "REJECTED" ? "Changes needed" : "In review"}
-            </span>
-          </div>
-          <ol className="timeline">
-            <li className={verifyStep("submitted")}>
-              <span className="tl-dot"><Icon name="check" /></span>
-              <div><strong>Documents submitted</strong><span className="d">Last updated {fmtDate(teacher.updatedAt)}</span></div>
-            </li>
-            <li className={verifyStep("review")}>
-              <span className="tl-dot">{teacher.status === "REJECTED" ? <Icon name="x" /> : <Icon name="eye" />}</span>
-              <div>
-                <strong>{teacher.status === "REJECTED" ? "Changes requested" : "Reviewed by our team"}</strong>
-                <span className="d">{teacher.status === "PENDING" ? "Usually within 2 working days" : teacher.status === "REJECTED" ? "Fix and resubmit from My profile" : "ID, photos and location checked"}</span>
-              </div>
-            </li>
-            <li className={verifyStep("done")}>
-              <span className="tl-dot"><Icon name="shield" /></span>
-              <div><strong>Approved and listed</strong><span className="d">{approved ? `Free trial ${teacher.trialEndsAt ? `until ${fmtDate(teacher.trialEndsAt)}` : "started"}` : `${TRIAL_DAYS} days free start here`}</span></div>
-            </li>
-          </ol>
-          <hr className="divider" style={{ margin: "20px 0 16px" }} />
-          <div className="label" style={{ marginBottom: 10 }}>Documents on file</div>
-          <ul className="checklist">
-            <li className={teacher.idPhotoUrl ? "ok" : ""}><span className="tick"><Icon name="check" /></span> ID photo <span className="badge" style={{ marginLeft: "auto" }}><Icon name="lock" /> Admins only</span></li>
-            <li className={teacher.profilePhotoUrl ? "ok" : ""}><span className="tick"><Icon name="check" /></span> Profile photo</li>
-            <li className={teacher.premisesPhotoUrls.length ? "ok" : ""}><span className="tick"><Icon name="check" /></span> {teacher.premisesPhotoUrls.length} premises photo{teacher.premisesPhotoUrls.length === 1 ? "" : "s"}</li>
-          </ul>
+        <section className="card" aria-labelledby="renew-h">
+          <span className="muted small" id="renew-h">Your next renewal</span>
+          <div className="price" style={{ fontSize: "2.2rem", margin: "6px 0 4px", color: "var(--ink)" }}>KES {PRICE_KES}</div>
+          <p className="muted small" style={{ margin: "0 0 16px" }}>
+            {approved && until && active ? `Due ${fmtDate(until)} · every ${PERIOD_DAYS} days after your trial.` : `Every ${PERIOD_DAYS} days after your trial.`}
+          </p>
+          {approved ? (
+            <a href="#subscription" className="btn sm">Pay with M-Pesa <Icon name="arrow" /></a>
+          ) : (
+            <span className="badge">Available after approval</span>
+          )}
         </section>
       </div>
+
+      <section className="card" aria-labelledby="ready-h" style={{ marginBottom: 16 }}>
+        <h2 id="ready-h" style={{ marginBottom: 16 }}>Keep your listing ready</h2>
+        <ul className="ready-list">
+          {ready.map((r) => (
+            <li key={r.text} className={r.ok ? "ok" : ""}>
+              <span className="tick">{r.ok ? <Icon name="check" /> : null}</span>
+              {r.ok ? <span>{r.text}</span> : <Link href={r.href}>{r.text}</Link>}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section id="subscription" className="card" aria-labelledby="sub-h" style={{ marginBottom: 16 }}>
         <div className="grid-2" style={{ gap: 28 }}>
