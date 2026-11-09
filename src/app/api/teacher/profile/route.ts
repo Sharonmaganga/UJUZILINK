@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { saveImage, UploadError } from "@/lib/upload";
+import { MAX_PREMISES_PHOTOS, saveImage, UploadError } from "@/lib/upload";
 import { normaliseKenyanPhone } from "@/lib/phone";
 
 const fields = z.object({
@@ -46,7 +46,9 @@ export async function POST(req: Request) {
     const profilePhoto = file(form, "profilePhoto");
     const premises = form.getAll("premisesPhotos").filter((v): v is File => v instanceof File && v.size > 0);
 
-    if (premises.length > 6) return NextResponse.json({ error: "Upload at most 6 premises photos" }, { status: 400 });
+    if (premises.length > MAX_PREMISES_PHOTOS) {
+      return NextResponse.json({ error: `Upload at most ${MAX_PREMISES_PHOTOS} premises photos` }, { status: 400 });
+    }
 
     const idPhotoUrl = idPhoto ? await saveImage(idPhoto, "ids") : existing?.idPhotoUrl;
     const profilePhotoUrl = profilePhoto ? await saveImage(profilePhoto, "profiles") : existing?.profilePhotoUrl;

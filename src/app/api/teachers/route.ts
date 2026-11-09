@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { boundingBox, distanceKm } from "@/lib/geo";
 import { activeWhere } from "@/lib/subscription";
 
+const approx = (n: number) => Math.round(n * 1000) / 1000;
+
 /**
  * GET /api/teachers?lat=..&lng=..&q=tailoring&radius=25
  * Returns verified, subscribed teachers sorted nearest first.
@@ -10,8 +12,9 @@ import { activeWhere } from "@/lib/subscription";
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const lat = Number(searchParams.get("lat"));
-  const lng = Number(searchParams.get("lng"));
+  // Number(null) is 0, so a missing parameter must be treated as invalid rather than "the equator".
+  const lat = searchParams.get("lat") ? Number(searchParams.get("lat")) : NaN;
+  const lng = searchParams.get("lng") ? Number(searchParams.get("lng")) : NaN;
   const radius = Math.min(Math.max(Number(searchParams.get("radius")) || 25, 1), 200);
   const q = searchParams.get("q")?.trim() ?? "";
 
@@ -65,8 +68,9 @@ export async function GET(req: Request) {
       bio: t.bio.length > 160 ? t.bio.slice(0, 157) + "..." : t.bio,
       businessName: t.businessName,
       address: t.address,
-      latitude: t.latitude,
-      longitude: t.longitude,
+      // Public pins are approximate (about 100 m); distance is still computed from the exact point.
+      latitude: approx(t.latitude),
+      longitude: approx(t.longitude),
       profilePhotoUrl: t.profilePhotoUrl,
       coverUrl: t.premisesPhotoUrls[0] ?? null,
       distanceKm: Math.round(distanceKm(lat, lng, t.latitude, t.longitude) * 10) / 10,
