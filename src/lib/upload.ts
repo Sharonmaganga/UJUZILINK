@@ -27,6 +27,13 @@ export function sniffImageType(bytes: Uint8Array): ImageType | null {
   return null;
 }
 
+/** Throws UploadError if the file is too large or not a real image. Lets callers check every file before saving any. */
+export async function assertImage(file: File): Promise<void> {
+  if (file.size > MAX_UPLOAD_BYTES) throw new UploadError(`${file.name}: photos must be under 5 MB`);
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  if (!sniffImageType(head)) throw new UploadError(`${file.name}: only JPG, PNG, WEBP or HEIC photos are allowed`);
+}
+
 /**
  * Saves an uploaded image and returns its URL.
  * Uses Vercel Blob when BLOB_READ_WRITE_TOKEN is set, otherwise writes to UPLOAD_DIR (default .uploads/)

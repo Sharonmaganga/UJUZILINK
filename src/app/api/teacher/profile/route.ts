@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { MAX_PREMISES_PHOTOS, saveImage, UploadError } from "@/lib/upload";
+import { assertImage, MAX_PREMISES_PHOTOS, saveImage, UploadError } from "@/lib/upload";
 import { normaliseKenyanPhone } from "@/lib/phone";
 
 const fields = z.object({
@@ -49,6 +49,9 @@ export async function POST(req: Request) {
     if (premises.length > MAX_PREMISES_PHOTOS) {
       return NextResponse.json({ error: `Upload at most ${MAX_PREMISES_PHOTOS} premises photos` }, { status: 400 });
     }
+
+    // Validate every file before writing any, so a bad photo doesn't leave orphaned uploads behind.
+    await Promise.all([idPhoto, profilePhoto, ...premises].filter((f): f is File => !!f).map(assertImage));
 
     const idPhotoUrl = idPhoto ? await saveImage(idPhoto, "ids") : existing?.idPhotoUrl;
     const profilePhotoUrl = profilePhoto ? await saveImage(profilePhoto, "profiles") : existing?.profilePhotoUrl;
