@@ -17,6 +17,8 @@ export default function FileField({
   existing = [],
   existingLabel,
   privateNote,
+  onFiles,
+  error: externalError,
 }: {
   name: string;
   label: string;
@@ -28,6 +30,10 @@ export default function FileField({
   existing?: string[];
   existingLabel?: string;
   privateNote?: boolean;
+  /** Called with the valid files the user picked (empty when cleared or rejected). */
+  onFiles?: (files: File[]) => void;
+  /** Error from the parent (e.g. server validation), shown under the field. */
+  error?: string;
 }) {
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -38,27 +44,19 @@ export default function FileField({
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     setError("");
-    if (files.length > max) {
-      setError(`Choose at most ${max} photos.`);
+    const reject = (msg: string) => {
+      setError(msg);
       e.target.value = "";
       setPreviews([]);
-      return;
-    }
+      onFiles?.([]);
+    };
+    if (files.length > max) return reject(`Choose at most ${max} photos.`);
     const bad = files.find((f) => !OK_TYPES.test(f.type) && !/\.(heic|heif)$/i.test(f.name));
-    if (bad) {
-      setError(`${bad.name} isn't a photo. Use JPG, PNG, WEBP or HEIC.`);
-      e.target.value = "";
-      setPreviews([]);
-      return;
-    }
+    if (bad) return reject(`${bad.name} isn't a photo. Use JPG, PNG, WEBP or HEIC.`);
     const big = files.find((f) => f.size > MAX_BYTES);
-    if (big) {
-      setError(`${big.name} is too large. Choose a photo under 15 MB.`);
-      e.target.value = "";
-      setPreviews([]);
-      return;
-    }
+    if (big) return reject(`${big.name} is too large. Choose a photo under 15 MB.`);
     setPreviews(files.map((f) => URL.createObjectURL(f)));
+    onFiles?.(files);
   }
 
   const showing = previews.length ? previews : existing;
@@ -83,10 +81,10 @@ export default function FileField({
           capture={capture}
           onChange={onChange}
           aria-labelledby={`${id}-label`}
-          aria-invalid={!!error}
+          aria-invalid={!!(error || externalError)}
         />
       </label>
-      {error && <span className="field-error" role="alert"><Icon name="alert" /> {error}</span>}
+      {(error || externalError) && <span className="field-error" role="alert"><Icon name="alert" /> {error || externalError}</span>}
       {showing.length > 0 && (
         <div className="thumbs">
           {showing.map((src) =>

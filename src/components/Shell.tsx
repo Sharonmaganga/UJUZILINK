@@ -36,7 +36,9 @@ export default function Shell({
 
 export const teacherNav = (teacherId?: string): ShellItem[] => [
   { key: "overview", href: "/dashboard", label: "Overview", icon: "dashboard" },
-  { key: "profile", href: "/dashboard/profile", label: "My profile", icon: "user" },
+  { key: "profile", href: "/dashboard/profile?step=1", label: "My profile", icon: "user" },
+  { key: "verification", href: "/dashboard/profile?step=5", label: "Verification", icon: "shield" },
+  { key: "photos", href: "/dashboard/profile?step=4", label: "Photos", icon: "image" },
   { key: "subscription", href: "/dashboard#subscription", label: "Subscription", icon: "cash" },
   { key: "payments", href: "/dashboard#payments", label: "Payments", icon: "history" },
   ...(teacherId ? [{ key: "public", href: `/teachers/${teacherId}`, label: "Public page", icon: "eye" as const }] : []),
