@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { boundingBox, distanceKm } from "@/lib/geo";
 import { activeWhere } from "@/lib/subscription";
+import { areaLabel } from "@/lib/places";
 
 const approx = (n: number) => Math.round(n * 1000) / 1000;
 
@@ -17,6 +18,8 @@ export async function GET(req: Request) {
   const lng = searchParams.get("lng") ? Number(searchParams.get("lng")) : NaN;
   const radius = Math.min(Math.max(Number(searchParams.get("radius")) || 25, 1), 200);
   const q = searchParams.get("q")?.trim() ?? "";
+  // A comma-separated q matches any of the terms (used by skill categories); a plain q behaves as before.
+  const terms = q.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 10);
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return NextResponse.json({ error: "lat and lng are required" }, { status: 400 });
@@ -28,16 +31,16 @@ export async function GET(req: Request) {
       ...activeWhere(),
       latitude: { gte: box.minLat, lte: box.maxLat },
       longitude: { gte: box.minLng, lte: box.maxLng },
-      ...(q
+      ...(terms.length
         ? {
             AND: [
               {
-                OR: [
-                  { skill: { contains: q, mode: "insensitive" as const } },
-                  { otherSkills: { has: q.toLowerCase() } },
-                  { bio: { contains: q, mode: "insensitive" as const } },
-                  { businessName: { contains: q, mode: "insensitive" as const } },
-                ],
+                OR: terms.flatMap((t) => [
+                  { skill: { contains: t, mode: "insensitive" as const } },
+                  { otherSkills: { has: t.toLowerCase() } },
+                  { bio: { contains: t, mode: "insensitive" as const } },
+                  { businessName: { contains: t, mode: "insensitive" as const } },
+                ]),
               },
             ],
           }
@@ -68,6 +71,7 @@ export async function GET(req: Request) {
       bio: t.bio.length > 160 ? t.bio.slice(0, 157) + "..." : t.bio,
       businessName: t.businessName,
       address: t.address,
+      area: areaLabel(t.latitude, t.longitude),
       // Public pins are approximate (about 100 m); distance is still computed from the exact point.
       latitude: approx(t.latitude),
       longitude: approx(t.longitude),

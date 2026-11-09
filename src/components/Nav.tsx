@@ -17,9 +17,10 @@ export default async function Nav() {
 
   const links = (
     <>
-      <NavLink href="/search">Find a teacher</NavLink>
+      <NavLink href="/skills">Explore Skills</NavLink>
+      <NavLink href="/search">Find Teachers</NavLink>
       <Link href="/#how">How it works</Link>
-      {role !== "TEACHER" && role !== "ADMIN" && <Link href="/#teach">Become a teacher</Link>}
+      {role !== "TEACHER" && role !== "ADMIN" && <Link href="/register?role=TEACHER">Become a Teacher</Link>}
       {role === "TEACHER" && <NavLink href="/dashboard">Dashboard</NavLink>}
       {role === "ADMIN" && <NavLink href="/admin">Admin</NavLink>}
     </>
@@ -42,12 +43,9 @@ export default async function Nav() {
               <SignOutButton />
             </span>
           ) : (
-            <>
-              <Link href="/login">Log in</Link>
-              <Link href="/register" className="btn sm">
-                Join free
-              </Link>
-            </>
+            <Link href="/login" className="btn sm" style={{ marginLeft: 12 }}>
+              Log in
+            </Link>
           )}
         </nav>
 
@@ -62,10 +60,8 @@ export default async function Nav() {
               <SignOutButton block />
             ) : (
               <>
-                <Link href="/login">Log in</Link>
-                <Link href="/register" className="btn block">
-                  Join free
-                </Link>
+                <Link href="/login" className="btn block">Log in</Link>
+                <Link href="/register" className="btn secondary block">Create a free account</Link>
               </>
             )}
           </nav>

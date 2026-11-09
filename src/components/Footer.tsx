@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Logo from "./Logo";
-import { CATEGORIES } from "@/lib/skills";
+import { CATEGORIES, categoryHref } from "@/lib/skills";
 
 export default function Footer() {
   return (
@@ -12,23 +12,25 @@ export default function Footer() {
               <Logo />
             </Link>
             <p className="small" style={{ marginTop: 16 }}>
-              Removing the financial and physical barriers to learning, one neighbourhood at a time.
+              Learn a skill. Find your person. Grow together. A community-first learning marketplace for Kenya.
             </p>
           </div>
           <div>
             <h4>Popular skills</h4>
             <ul>
               {CATEGORIES.slice(0, 6).map((c) => (
-                <li key={c.name}>
-                  <Link href={`/search?q=${encodeURIComponent(c.name)}`}>{c.name}</Link>
+                <li key={c.slug}>
+                  <Link href={categoryHref(c)}>{c.name}</Link>
                 </li>
               ))}
+              <li><Link href="/skills">All skills</Link></li>
             </ul>
           </div>
           <div>
             <h4>Learners</h4>
             <ul>
-              <li><Link href="/search">Find a teacher</Link></li>
+              <li><Link href="/skills">Explore skills</Link></li>
+              <li><Link href="/search">Find teachers</Link></li>
               <li><Link href="/register">Join for free</Link></li>
               <li><Link href="/#how">How it works</Link></li>
               <li><Link href="/#trust">How we verify</Link></li>

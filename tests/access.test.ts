@@ -38,6 +38,15 @@ describe("document access", () => {
 describe("teacher search API", () => {
   beforeEach(resetMocks);
 
+  it("matches any term of a comma-separated category query", async () => {
+    db.teacherProfile.findMany.mockResolvedValue([]);
+    await searchTeachers(new Request("http://test/api/teachers?lat=-1.28&lng=36.81&q=tailor,sewing"));
+    const or = db.teacherProfile.findMany.mock.calls[0][0].where.AND[0].OR;
+    expect(or).toHaveLength(8);
+    expect(or[0]).toEqual({ skill: { contains: "tailor", mode: "insensitive" } });
+    expect(or[4]).toEqual({ skill: { contains: "sewing", mode: "insensitive" } });
+  });
+
   it("requires a location", async () => {
     expect((await searchTeachers(new Request("http://test/api/teachers"))).status).toBe(400);
   });

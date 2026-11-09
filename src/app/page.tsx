@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import path from "path";
 import { prisma } from "@/lib/prisma";
 import { activeWhere, PRICE_KES, TRIAL_DAYS } from "@/lib/subscription";
-import { CATEGORIES } from "@/lib/skills";
+import { CATEGORIES, categoryHref } from "@/lib/skills";
 import TeacherCard, { type TeacherCardData } from "@/components/TeacherCard";
 import HeroSearch from "@/components/HeroSearch";
 import Icon from "@/components/Icon";
@@ -56,8 +56,8 @@ const TRUST = [
 
 function CategoryCard({ c }: { c: (typeof CATEGORIES)[number] }) {
   return (
-    <Link href={`/search?q=${encodeURIComponent(c.name)}`} className="cat">
-      <span className={`icon-tile${c.tone === "amber" ? " amber" : ""}`}>
+    <Link href={categoryHref(c)} className="cat">
+      <span className={`icon-tile ${c.tone}`}>
         <Icon name={c.icon} />
       </span>
       <span>
@@ -125,7 +125,7 @@ export default async function Home() {
             <h2>Explore popular skill categories</h2>
             <div className="cat-grid">
               {CATEGORIES.slice(0, 4).map((c) => (
-                <CategoryCard key={c.name} c={c} />
+                <CategoryCard key={c.slug} c={c} />
               ))}
             </div>
           </div>
@@ -138,13 +138,13 @@ export default async function Home() {
             <h2 id="skills-h" style={{ fontSize: "clamp(1.3rem, 2.4vw, 1.6rem)" }}>
               {HERO_PHOTO ? "More skills to learn" : "Explore popular skills near you"}
             </h2>
-            <Link href="/search" className="link">
-              Browse all teachers
+            <Link href="/skills" className="link">
+              View all skills
             </Link>
           </div>
           <div className="cat-grid">
-            {(HERO_PHOTO ? CATEGORIES.slice(4) : CATEGORIES.slice(0, 8)).map((c) => (
-              <CategoryCard key={c.name} c={c} />
+            {(HERO_PHOTO ? CATEGORIES.slice(4, 8) : CATEGORIES.slice(0, 8)).map((c) => (
+              <CategoryCard key={c.slug} c={c} />
             ))}
           </div>
         </section>
