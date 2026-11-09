@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Icon from "./Icon";
+import { iconForSkill } from "@/lib/skills";
 
 export type TeacherCardData = {
   id: string;
@@ -11,25 +13,43 @@ export type TeacherCardData = {
   distanceKm?: number;
 };
 
-/** Image-first card used on the home page and in search results. */
-export default function TeacherCard({ t, highlighted }: { t: TeacherCardData; highlighted?: boolean }) {
+export const teacherTitle = (t: { businessName: string | null; skill: string; name: string }) =>
+  t.businessName || `Learn ${t.skill.toLowerCase()} with ${t.name.split(" ")[0]}`;
+
+/** Image-first card for verified teachers (home page discovery preview). */
+export default function TeacherCard({ t }: { t: TeacherCardData }) {
   return (
-    <Link href={`/teachers/${t.id}`} className={`tcard${highlighted ? " is-highlighted" : ""}`}>
+    <Link href={`/teachers/${t.id}`} className="tcard">
       <div className="tcard-cover">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {t.coverUrl ? <img src={t.coverUrl} alt="" loading="lazy" /> : <div className="tcard-cover-empty">{t.skill}</div>}
-        {t.distanceKm !== undefined && <span className="tcard-distance">{t.distanceKm} km away</span>}
+        {t.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={t.coverUrl} alt="" loading="lazy" />
+        ) : (
+          <div className="cover-empty">
+            <Icon name={iconForSkill(t.skill)} />
+          </div>
+        )}
+        {t.distanceKm !== undefined && (
+          <span className="badge">
+            <Icon name="pin" /> {t.distanceKm} km
+          </span>
+        )}
       </div>
       <div className="tcard-body">
         <div className="tcard-skill">{t.skill}</div>
-        <div className="tcard-title">{t.businessName || `Learn ${t.skill.toLowerCase()} with ${t.name.split(" ")[0]}`}</div>
-        <div className="tcard-teacher">
+        <div className="tcard-title">{teacherTitle(t)}</div>
+        <div className="tcard-who">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={t.profilePhotoUrl} alt="" className="avatar xs" loading="lazy" />
           <span>{t.name}</span>
-          <span className="verified" title="ID verified">✓</span>
+          <span className="verified-badge" title="ID verified">
+            <Icon name="shield" label="Verified" />
+          </span>
         </div>
-        <div className="tcard-meta">📍 {t.address}</div>
+        <div className="tcard-where">
+          <Icon name="pin" />
+          <span>{t.address}</span>
+        </div>
       </div>
     </Link>
   );
