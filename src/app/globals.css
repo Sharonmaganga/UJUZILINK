@@ -511,11 +511,18 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
 .crumbs a:hover { color: var(--forest); }
 .profile-cover { position: relative; height: clamp(180px, 26vw, 300px); border-radius: var(--r-xl); overflow: hidden; background: var(--sage); }
 .profile-cover img { width: 100%; height: 100%; object-fit: cover; }
-.profile-cover .arch-mini { position: absolute; right: 8%; bottom: 0; width: 160px; height: 78%; background: var(--forest); border-radius: 999px 999px 0 0; }
-.profile-cover .arch-mini::after { content: ""; position: absolute; left: 30%; right: 30%; top: 16%; height: 36%; background: var(--amber); border-radius: 999px; }
+.profile-cover .cover-art { position: absolute; inset: 0; display: grid; place-items: center end; padding-right: 12%; }
+.profile-cover .cover-art span { display: grid; place-items: center; width: clamp(160px, 26%, 260px); height: 64%; border-radius: var(--r-lg); background: var(--forest); }
+.profile-cover .cover-art span::after { content: ""; width: 34%; aspect-ratio: 1; border-radius: 50%; background: var(--amber); }
 .profile-head { display: flex; gap: 20px; align-items: flex-end; margin: -56px 0 0; padding: 0 clamp(16px, 3vw, 32px); position: relative; flex-wrap: wrap; }
 .profile-head-text { padding-bottom: 6px; min-width: 0; flex: 1 1 280px; }
 .profile-head h1 { font-size: clamp(1.7rem, 3.6vw, 2.5rem); margin: 6px 0 6px; }
+.profile-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.92rem; }
+.profile-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.profile-meta .icon { width: 15px; height: 15px; }
+.profile-verified { align-self: center; margin-bottom: 6px; padding: 6px 14px; font-size: 0.82rem; }
+.muted-ink { color: #3e4641; }
+.contact-card h2 { font-size: 1.3rem; }
 .profile-layout { display: grid; gap: 28px; margin-top: 32px; }
 @media (min-width: 980px) { .profile-layout { grid-template-columns: minmax(0, 1fr) 360px; } .profile-aside { position: sticky; top: calc(var(--nav-h) + 20px); align-self: start; } }
 .gallery { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); }
