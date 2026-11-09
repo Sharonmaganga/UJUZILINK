@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -32,6 +32,22 @@ export async function assertImage(file: File): Promise<void> {
   if (file.size > MAX_UPLOAD_BYTES) throw new UploadError(`${file.name}: photos must be under 5 MB`);
   const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
   if (!sniffImageType(head)) throw new UploadError(`${file.name}: only JPG, PNG, WEBP or HEIC photos are allowed`);
+}
+
+/** Best-effort removal of an image this app stored (used when a draft photo is replaced). Never throws. */
+export async function deleteImage(url: string | null | undefined): Promise<void> {
+  if (!url) return;
+  try {
+    if (url.startsWith("/files/")) {
+      const file = path.join(LOCAL_UPLOAD_DIR, ...url.slice("/files/".length).split("/"));
+      if (file.startsWith(LOCAL_UPLOAD_DIR + path.sep)) await unlink(file);
+    } else if (process.env.BLOB_READ_WRITE_TOKEN && url.includes(".blob.vercel-storage.com/")) {
+      const { del } = await import("@vercel/blob");
+      await del(url);
+    }
+  } catch {
+    /* already gone or not ours */
+  }
 }
 
 /**
