@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { isActive } from "@/lib/subscription";
+import { teacherTitle } from "@/components/TeacherCard";
+import Icon from "@/components/Icon";
 
 export default async function TeacherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,140 +14,182 @@ export default async function TeacherPage({ params }: { params: Promise<{ id: st
   ]);
   const isOwner = !!session && teacher?.userId === session.user.id;
   const isAdmin = session?.user.role === "ADMIN";
-  if (!teacher || (!(teacher.status === "APPROVED" && isActive(teacher)) && !isOwner && !isAdmin)) notFound();
+  const isPublic = !!teacher && teacher.status === "APPROVED" && isActive(teacher);
+  if (!teacher || (!isPublic && !isOwner && !isAdmin)) notFound();
 
+  const signedIn = !!session;
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${teacher.latitude},${teacher.longitude}`;
   const wa = teacher.whatsapp ?? teacher.phone;
   const first = teacher.user.name.split(" ")[0];
   const cover = teacher.premisesPhotoUrls[0];
-  const title = teacher.businessName || `Learn ${teacher.skill.toLowerCase()} with ${first}`;
+  const title = teacherTitle({ businessName: teacher.businessName, skill: teacher.skill, name: teacher.user.name });
+  const verified = teacher.status === "APPROVED";
+  const back = `/teachers/${teacher.id}`;
 
   return (
-    <div className="has-mobile-cta">
-      <nav className="small muted" style={{ marginBottom: 20 }}>
-        <Link href="/">Home</Link> › <Link href="/search">Teachers</Link> ›{" "}
+    <div className="container page has-mobile-cta">
+      <nav className="crumbs" aria-label="Breadcrumb">
+        <Link href="/">Home</Link>
+        <Icon name="chevronRight" />
+        <Link href="/search">Teachers</Link>
+        <Icon name="chevronRight" />
         <Link href={`/search?q=${encodeURIComponent(teacher.skill)}`}>{teacher.skill}</Link>
       </nav>
 
-      <div className="profile-layout" style={{ marginTop: 0 }}>
-        <div>
-          <div className="pill-badges">
-            <span className="pbadge green">✓ ID verified</span>
-            <span className="pbadge yellow">{teacher.skill}</span>
-            {teacher.status !== "APPROVED" && <span className="pbadge pink">Not public yet</span>}
+      {!isPublic && (
+        <div className="alert warn" style={{ marginBottom: 16 }}>
+          <Icon name="lock" />
+          <div>
+            <strong>Not visible to learners</strong>
+            <p>
+              {teacher.status !== "APPROVED"
+                ? "This profile is waiting for verification. Only you and the Ujuzi Link team can see it."
+                : "The listing period has ended. Renew from the dashboard to appear in search again."}
+            </p>
           </div>
-          <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>{title}</h1>
-          <div className="avatar-stack">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={teacher.profilePhotoUrl} alt={teacher.user.name} className="avatar" style={{ width: 44, height: 44 }} />
-            <div>
-              <div>{teacher.user.name}</div>
-              <div className="small muted" style={{ fontWeight: 400 }}>📍 {teacher.address}</div>
-            </div>
-          </div>
+        </div>
+      )}
 
-          <div className="tabs" style={{ marginTop: 24 }}>
-            <a href="#about">About</a>
-            <a href="#place">Place of trade</a>
-            <a href="#location">Location</a>
-            <a href="#safety">Safety</a>
-          </div>
+      <div className="profile-cover">
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cover} alt={`${teacher.user.name}'s place of trade`} />
+        ) : (
+          <div className="arch-mini" aria-hidden />
+        )}
+      </div>
 
-          {cover && (
-            <div className="profile-cover">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cover} alt={`${teacher.user.name}'s place of trade`} />
-            </div>
-          )}
-
-          <section id="about" className="section">
-            <h2>About {first}</h2>
-            <p className="prose">{teacher.bio}</p>
-            {teacher.otherSkills.length > 0 && (
-              <>
-                <h3 style={{ marginTop: 20 }}>Also teaches</h3>
-                <div className="chips" style={{ flexWrap: "wrap" }}>
-                  {teacher.otherSkills.map((s) => (
-                    <Link key={s} href={`/search?q=${encodeURIComponent(s)}`} className="chip">
-                      {s}
-                    </Link>
-                  ))}
-                </div>
-              </>
+      <div className="profile-head">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={teacher.profilePhotoUrl} alt={teacher.user.name} className="avatar xl" />
+        <div className="profile-head-text">
+          <div className="row" style={{ gap: 8 }}>
+            {verified && (
+              <span className="badge green">
+                <Icon name="shield" /> ID verified
+              </span>
             )}
+            <span className="badge">{teacher.skill}</span>
+          </div>
+          <h1>{title}</h1>
+          <div className="muted">
+            {teacher.user.name} · {teacher.skill} teacher
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-layout">
+        <div className="stack-lg">
+          <section className="card" aria-labelledby="about-h">
+            <h2 id="about-h" style={{ marginBottom: 14 }}>About {first}</h2>
+            <p className="prose">{teacher.bio}</p>
+            <div style={{ marginTop: 20 }}>
+              <div className="label" style={{ marginBottom: 10 }}>Skills taught</div>
+              <div className="chips wrap">
+                <Link href={`/search?q=${encodeURIComponent(teacher.skill)}`} className="chip active">{teacher.skill}</Link>
+                {teacher.otherSkills.map((s) => (
+                  <Link key={s} href={`/search?q=${encodeURIComponent(s)}`} className="chip" style={{ textTransform: "capitalize" }}>
+                    {s}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </section>
 
           {teacher.premisesPhotoUrls.length > 0 && (
-            <section id="place" className="section">
-              <h2>Place of trade</h2>
-              <div className="photos">
-                {teacher.premisesPhotoUrls.map((url) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={url} src={url} alt="Premises" loading="lazy" />
+            <section className="card" aria-labelledby="gallery-h">
+              <div className="card-head">
+                <h2 id="gallery-h">Place of trade & work</h2>
+                <span className="muted small">{teacher.premisesPhotoUrls.length} photo{teacher.premisesPhotoUrls.length === 1 ? "" : "s"}</span>
+              </div>
+              <div className="gallery">
+                {teacher.premisesPhotoUrls.map((url, i) => (
+                  <a key={url} href={url} target="_blank" rel="noreferrer" aria-label={`Open photo ${i + 1} of ${teacher.premisesPhotoUrls.length}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`${first}'s place of trade, photo ${i + 1}`} loading="lazy" />
+                  </a>
                 ))}
               </div>
             </section>
           )}
 
-          <section id="location" className="section">
-            <h2>Where you&apos;ll learn</h2>
-            <p className="muted">{teacher.address}</p>
-            <a className="btn secondary" href={directions} target="_blank" rel="noreferrer">
-              🧭 Get directions
-            </a>
+          <section className="card" aria-labelledby="where-h">
+            <h2 id="where-h" style={{ marginBottom: 16 }}>Where you&apos;ll learn</h2>
+            <div className="loc-card">
+              <span className="icon-tile"><Icon name="pin" /></span>
+              <div className="stack-sm grow">
+                <strong>{teacher.address}</strong>
+                {signedIn ? (
+                  <>
+                    <span className="muted small">The exact pin was confirmed during verification.</span>
+                    <div>
+                      <a className="btn secondary sm" href={directions} target="_blank" rel="noreferrer">
+                        <Icon name="navigation" /> Get directions
+                      </a>
+                    </div>
+                  </>
+                ) : (
+                  <span className="muted small">
+                    The exact pin and directions are shown to signed-in members.{" "}
+                    <Link href={`/login?callbackUrl=${back}`} className="link">Log in</Link>
+                  </span>
+                )}
+              </div>
+            </div>
           </section>
 
-          <section id="safety" className="section">
-            <h2>Learning safely</h2>
-            <div className="safety">
-              <div><span className="ico">🪪</span><span>{first}&apos;s ID, photo and premises were checked by the Ujuzi Link team.</span></div>
-              <div><span className="ico">📍</span><span>Meet at the verified place of trade shown above.</span></div>
-              <div><span className="ico">🤝</span><span>Agree on what you&apos;ll learn and the price before you start, then pay {first} directly.</span></div>
-              <div><span className="ico">🚫</span><span>Ujuzi Link never asks you to pay through the app.</span></div>
-            </div>
+          <section className="card soft" aria-labelledby="safety-h">
+            <h2 id="safety-h" style={{ marginBottom: 16 }}>Learning safely</h2>
+            <ul className="checks">
+              <li><Icon name="check" /> {verified ? `${first}'s ID, photo and premises were checked by the Ujuzi Link team.` : "This profile has not been verified yet."}</li>
+              <li><Icon name="check" /> Meet at the place of trade shown above, ideally during working hours.</li>
+              <li><Icon name="check" /> Agree on what you&apos;ll learn and the price before you start, then pay {first} directly.</li>
+              <li><Icon name="check" /> Ujuzi Link never asks you to pay through the app.</li>
+            </ul>
           </section>
         </div>
 
         <aside className="profile-aside">
-          <div className="contact-card">
-            <div className="small muted">Learn {teacher.skill.toLowerCase()} with</div>
-            <strong style={{ fontSize: "1.1rem" }}>{teacher.user.name}</strong>
-            <div className="free">Free to contact</div>
-            <div className="small muted" style={{ marginTop: -8 }}>Agree the price with {first} and pay directly.</div>
-            {session ? (
+          <div className="card contact-card">
+            <span className="muted small">Learn {teacher.skill.toLowerCase()} with {teacher.user.name}</span>
+            <div className="contact-free">Free to contact</div>
+            <span className="muted small" style={{ marginTop: -6 }}>Agree the price with {first} and pay them directly.</span>
+            <hr className="divider" />
+            {signedIn ? (
               <>
-                <a className="btn brand lg block" href={`tel:+${teacher.phone}`}>📞 Call +{teacher.phone}</a>
+                <a className="btn lg block" href={`tel:+${teacher.phone}`}>
+                  <Icon name="phone" /> Call +{teacher.phone}
+                </a>
                 <a className="btn secondary block" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">
-                  💬 WhatsApp
+                  <Icon name="chat" /> WhatsApp {first}
                 </a>
               </>
             ) : (
               <>
-                <Link className="btn brand lg block" href={`/register?callbackUrl=/teachers/${teacher.id}`}>
-                  Join free to contact
+                <Link className="btn lg block" href={`/register?callbackUrl=${back}`}>
+                  Join free to contact {first}
                 </Link>
                 <p className="small muted" style={{ margin: 0, textAlign: "center" }}>
-                  Already a member? <Link href={`/login?callbackUrl=/teachers/${teacher.id}`}>Log in</Link>
+                  Already a member? <Link href={`/login?callbackUrl=${back}`} className="link">Log in</Link>
                 </p>
               </>
             )}
-            <ul className="checks">
-              <li>ID-verified teacher</li>
-              <li>Real place of trade, pinned on the map</li>
-              <li>No fees for learners, ever</li>
+            <ul className="checks small" style={{ marginTop: 6 }}>
+              <li><Icon name="lock" /> Phone and WhatsApp visible to members only</li>
+              <li><Icon name="check" /> No fees for learners, ever</li>
             </ul>
           </div>
         </aside>
       </div>
 
       <div className="mobile-cta">
-        {session ? (
+        {signedIn ? (
           <>
-            <a className="btn brand" href={`tel:+${teacher.phone}`}>📞 Call</a>
-            <a className="btn secondary" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">💬 WhatsApp</a>
+            <a className="btn" href={`tel:+${teacher.phone}`}><Icon name="phone" /> Call</a>
+            <a className="btn secondary" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer"><Icon name="chat" /> WhatsApp</a>
           </>
         ) : (
-          <Link className="btn brand" href={`/register?callbackUrl=/teachers/${teacher.id}`}>Join free to contact {first}</Link>
+          <Link className="btn" href={`/register?callbackUrl=${back}`}>Join free to contact {first}</Link>
         )}
       </div>
     </div>
