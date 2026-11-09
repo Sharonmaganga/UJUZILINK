@@ -3,6 +3,25 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Icon from "@/components/Icon";
+import PasswordInput from "@/components/PasswordInput";
+import { normaliseKenyanPhone } from "@/lib/phone";
+
+type Field = "name" | "email" | "phone" | "password";
+
+// Mirrors the server rules in /api/register so learners get instant, specific feedback.
+function validate(form: FormData): Partial<Record<Field, string>> {
+  const errors: Partial<Record<Field, string>> = {};
+  const name = String(form.get("name") ?? "").trim();
+  const email = String(form.get("email") ?? "").trim();
+  const phone = String(form.get("phone") ?? "").trim();
+  const password = String(form.get("password") ?? "");
+  if (name.length < 2) errors.name = "Enter your full name.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email, like name@example.com.";
+  if (phone && !normaliseKenyanPhone(phone)) errors.phone = "Enter a Kenyan number, like 0712 345 678.";
+  if (password.length < 8) errors.password = "Use at least 8 characters.";
+  return errors;
+}
 
 export default function RegisterForm({
   initialRole,
@@ -14,72 +33,105 @@ export default function RegisterForm({
   const router = useRouter();
   const [role, setRole] = useState(initialRole);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<Field, string>>>({});
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
     const form = new FormData(e.currentTarget);
-    const body = Object.fromEntries(form.entries());
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, role }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setLoading(false);
-      return setError(data.error ?? "Something went wrong");
+    const errs = validate(form);
+    setFieldErrors(errs);
+    setError("");
+    const firstBad = Object.keys(errs)[0];
+    if (firstBad) {
+      document.getElementById(`reg-${firstBad}`)?.focus();
+      return;
     }
-    const login = await signIn("credentials", { email: body.email, password: body.password, redirect: false });
-    setLoading(false);
-    if (login?.error) return router.push("/login?registered=1");
-    router.push(role === "TEACHER" ? "/dashboard/profile" : callbackUrl ?? "/search");
-    router.refresh();
+    setLoading(true);
+    const body = Object.fromEntries(form.entries());
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...body, role }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong");
+        return;
+      }
+      const login = await signIn("credentials", { email: body.email, password: body.password, redirect: false });
+      if (login?.error) return router.push("/login?registered=1");
+      router.push(role === "TEACHER" ? "/dashboard/profile" : callbackUrl ?? "/search");
+      router.refresh();
+    } catch {
+      setError("No connection. Check your internet and try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
+  const err = (f: Field) =>
+    fieldErrors[f] && (
+      <span className="field-error" id={`reg-${f}-err`}>
+        <Icon name="alert" /> {fieldErrors[f]}
+      </span>
+    );
+  const a11y = (f: Field) => ({ id: `reg-${f}`, "aria-invalid": !!fieldErrors[f], "aria-describedby": fieldErrors[f] ? `reg-${f}-err` : undefined });
+
   return (
-    <form className="card stack auth-card" onSubmit={onSubmit}>
+    // method="post" so a submit before hydration can never put the password in the URL
+    <form className="auth-card" onSubmit={onSubmit} noValidate method="post">
       <div>
-        <h1 style={{ marginBottom: 4 }}>Join Ujuzi Link</h1>
-        <p className="muted" style={{ margin: 0 }}>Free for learners. Teachers get their first month free.</p>
+        <h1>Create your account</h1>
+        <p className="muted" style={{ margin: "8px 0 0" }}>
+          Already a member? <Link href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="link">Log in</Link>
+        </p>
       </div>
-      <div className="segmented" role="radiogroup" aria-label="Account type">
-        <button type="button" onClick={() => setRole("LEARNER")} aria-pressed={role === "LEARNER"}>
-          🎓 I want to learn
+
+      <div className="segmented" role="radiogroup" aria-label="I want to">
+        <button type="button" role="radio" aria-checked={role === "LEARNER"} onClick={() => setRole("LEARNER")}>
+          <Icon name="graduation" /> I want to learn
         </button>
-        <button type="button" onClick={() => setRole("TEACHER")} aria-pressed={role === "TEACHER"}>
-          🧰 I want to teach
+        <button type="button" role="radio" aria-checked={role === "TEACHER"} onClick={() => setRole("TEACHER")}>
+          <Icon name="store" /> I want to teach
         </button>
       </div>
       {role === "TEACHER" && (
         <div className="alert ok small">
-          After signing up you&apos;ll add your ID, location, a photo of yourself and photos of your place of trade.
+          <Icon name="shield" />
+          <p style={{ margin: 0 }}>Next you&apos;ll add your ID, a photo, photos of your place of trade and its location. Your first month is free once approved.</p>
         </div>
       )}
-      {error && <div className="alert">{error}</div>}
-      <label>
-        Full name
-        <input name="name" required autoComplete="name" />
+      {error && (
+        <div className="alert" role="alert"><Icon name="alert" /><p style={{ margin: 0 }}>{error}</p></div>
+      )}
+
+      <label className="field">
+        <span>Full name</span>
+        <input name="name" autoComplete="name" {...a11y("name")} />
+        {err("name")}
       </label>
-      <label>
-        Email
-        <input name="email" type="email" required autoComplete="email" />
+      <label className="field">
+        <span>Email</span>
+        <input name="email" type="email" autoComplete="email" inputMode="email" {...a11y("email")} />
+        {err("email")}
       </label>
-      <label>
-        Phone number <span className="hint">Optional, e.g. 0712 345 678</span>
-        <input name="phone" type="tel" autoComplete="tel" />
+      <label className="field">
+        <span>Phone number <span className="hint">· optional</span></span>
+        <input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="0712 345 678" {...a11y("phone")} />
+        {err("phone")}
       </label>
-      <label>
-        Password <span className="hint">At least 8 characters</span>
-        <input name="password" type="password" required minLength={8} autoComplete="new-password" />
+      <label className="field">
+        <span>Password</span>
+        <PasswordInput name="password" autoComplete="new-password" {...a11y("password")} />
+        {err("password") || <span className="hint">At least 8 characters.</span>}
       </label>
-      <button className="btn brand lg block" disabled={loading}>
-        {loading ? "Creating account..." : "Create free account"}
+      <button className="btn lg block" disabled={loading}>
+        {loading ? <><Icon name="loader" className="spin" /> Creating account…</> : role === "TEACHER" ? "Create account and continue" : "Create free account"}
       </button>
-      <p className="small muted">
-        Already have an account? <Link href="/login" className="link">Log in</Link>
+      <p className="xs muted" style={{ margin: 0, textAlign: "center" }}>
+        Learners never pay Ujuzi Link. You pay teachers directly, once you&apos;ve met and agreed.
       </p>
     </form>
   );

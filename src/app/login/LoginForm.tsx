@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Icon from "@/components/Icon";
+import PasswordInput from "@/components/PasswordInput";
+import { homeForRole } from "@/lib/routing";
 
-export default function LoginForm({ callbackUrl, registered }: { callbackUrl: string; registered: boolean }) {
+export default function LoginForm({ callbackUrl, registered }: { callbackUrl: string | null; registered: boolean }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,39 +17,52 @@ export default function LoginForm({ callbackUrl, registered }: { callbackUrl: st
     setLoading(true);
     setError("");
     const form = new FormData(e.currentTarget);
-    const res = await signIn("credentials", {
-      email: form.get("email"),
-      password: form.get("password"),
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) return setError("Wrong email or password");
-    router.push(callbackUrl);
-    router.refresh();
+    try {
+      const res = await signIn("credentials", {
+        email: String(form.get("email") ?? "").trim(),
+        password: form.get("password"),
+        redirect: false,
+      });
+      if (res?.error) {
+        setError("That email and password don't match an account. Check them and try again.");
+        return;
+      }
+      const session = await getSession();
+      router.push(callbackUrl ?? homeForRole(session?.user.role));
+      router.refresh();
+    } catch {
+      setError("No connection. Check your internet and try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <form className="card stack auth-card" onSubmit={onSubmit}>
+    // method="post" so a submit before hydration can never put credentials in the URL
+    <form className="auth-card" onSubmit={onSubmit} method="post">
       <div>
-        <h1 style={{ marginBottom: 4 }}>Welcome back</h1>
-        <p className="muted" style={{ margin: 0 }}>Log in to contact teachers and manage your profile.</p>
+        <h1>Log in</h1>
+        <p className="muted" style={{ margin: "8px 0 0" }}>
+          New to Ujuzi Link? <Link href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="link">Create a free account</Link>
+        </p>
       </div>
-      {registered && <div className="alert ok">Account created. Sign in to continue.</div>}
-      {error && <div className="alert">{error}</div>}
-      <label>
-        Email
-        <input name="email" type="email" required autoComplete="email" />
+      {registered && (
+        <div className="alert ok" role="status"><Icon name="check" /><p style={{ margin: 0 }}>Account created. Log in to continue.</p></div>
+      )}
+      {error && (
+        <div className="alert" role="alert"><Icon name="alert" /><p style={{ margin: 0 }}>{error}</p></div>
+      )}
+      <label className="field">
+        <span>Email</span>
+        <input name="email" type="email" required autoComplete="email" inputMode="email" aria-invalid={!!error} />
       </label>
-      <label>
-        Password
-        <input name="password" type="password" required autoComplete="current-password" />
+      <label className="field">
+        <span>Password</span>
+        <PasswordInput name="password" required autoComplete="current-password" aria-invalid={!!error} />
       </label>
-      <button className="btn brand lg block" disabled={loading}>
-        {loading ? "Logging in..." : "Log in"}
+      <button className="btn lg block" disabled={loading}>
+        {loading ? <><Icon name="loader" className="spin" /> Logging in…</> : "Log in"}
       </button>
-      <p className="small muted">
-        New here? <Link href="/register" className="link">Join for free</Link>
-      </p>
     </form>
   );
 }
