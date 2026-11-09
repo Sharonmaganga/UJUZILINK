@@ -250,9 +250,35 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
 .hero h1 { font-size: clamp(2.5rem, 6.4vw, 4.6rem); margin: 18px 0 20px; }
 .hero h1 em { font-style: normal; color: var(--forest); position: relative; white-space: nowrap; }
 .hero h1 em::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0.06em; height: 0.16em; background: var(--amber); border-radius: 4px; z-index: -1; opacity: 0.9; }
-.hero.has-photo { color: #fff; background: var(--forest-900); }
-.hero.has-photo .hero-photo { position: absolute; inset: 0; background-size: cover; background-position: center right; }
-.hero.has-photo .hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 42, 33, 0.94) 0%, rgba(12, 42, 33, 0.78) 42%, rgba(12, 42, 33, 0.2) 100%); }
+/* Photographic hero: photo on the right, fading into forest green behind the copy */
+.hero.has-photo { color: #fff; background: var(--forest); padding-bottom: 40px; }
+/* Full-width bottom shade so the category cards sit on a calm base, with no seam at the photo's edge */
+.hero.has-photo::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(0deg, rgba(12, 42, 33, 0.9) 0%, rgba(12, 42, 33, 0.35) 26%, rgba(12, 42, 33, 0) 48%); }
+.hero.has-photo > .container { z-index: 2; }
+.hero.has-photo .hero-photo { position: absolute; top: 0; right: 0; bottom: 0; width: min(64%, 1000px); background-size: cover; background-position: 40% 30%; }
+.hero.has-photo .hero-photo::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--forest) 0%, rgba(23, 76, 60, 0.85) 16%, rgba(23, 76, 60, 0.3) 42%, rgba(23, 76, 60, 0) 68%);
+}
+@media (max-width: 999px) {
+  .hero.has-photo .hero-photo { width: 100%; background-position: 70% 25%; }
+  .hero.has-photo .hero-photo::after { background: linear-gradient(180deg, rgba(12, 42, 33, 0.55) 0%, rgba(12, 42, 33, 0.82) 45%, var(--forest-900) 100%); }
+}
+.hero.has-photo .hero-grid { min-height: min(560px, 62vh); }
+@media (min-width: 1000px) { .hero.has-photo .hero-grid { grid-template-columns: minmax(0, 620px) 1fr; } }
+.hero.has-photo .search-bar { border-color: transparent; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.5); }
+.hero-trust { display: flex; flex-wrap: wrap; gap: 8px 0; margin-top: 18px; font-size: 0.92rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
+.hero-trust span { display: inline-flex; align-items: center; gap: 8px; padding-right: 16px; margin-right: 16px; border-right: 1px solid rgba(255, 255, 255, 0.3); }
+.hero-trust span:last-child { border-right: 0; margin-right: 0; }
+.hero-trust .icon { color: var(--amber); width: 17px; height: 17px; }
+.hero-cats { position: relative; margin-top: clamp(32px, 6vw, 64px); }
+.hero-cats h2 { color: #fff; font-size: clamp(1.15rem, 2vw, 1.4rem); margin-bottom: 16px; }
+.hero-cats .cat { background: rgba(250, 246, 236, 0.97); border-color: transparent; color: var(--ink); }
+@media (max-width: 640px) { .hero-trust { gap: 8px 18px; } .hero-trust span { border-right: 0; padding-right: 0; margin-right: 0; } }
+.hero-cats .cat:hover { box-shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.5); }
+.hero-cats .cat-grid { grid-template-columns: 1fr; }
+@media (min-width: 560px) { .hero-cats .cat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .hero-cats .cat-grid { grid-template-columns: repeat(4, 1fr); } }
 .hero.has-photo h1, .hero.has-photo .eyebrow { color: #fff; }
 .hero.has-photo h1 em { color: var(--amber); }
 .hero.has-photo h1 em::after { display: none; }

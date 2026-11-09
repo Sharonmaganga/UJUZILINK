@@ -54,6 +54,21 @@ const TRUST = [
   { icon: "pin", title: "Pinned location", body: "A confirmed location, so distances in search are real." },
 ] as const;
 
+function CategoryCard({ c }: { c: (typeof CATEGORIES)[number] }) {
+  return (
+    <Link href={`/search?q=${encodeURIComponent(c.name)}`} className="cat">
+      <span className={`icon-tile${c.tone === "amber" ? " amber" : ""}`}>
+        <Icon name={c.icon} />
+      </span>
+      <span>
+        <strong>{c.name}</strong>
+        <span className="sub">{c.sub}</span>
+      </span>
+      <Icon name="chevronRight" className="arrow" />
+    </Link>
+  );
+}
+
 export default async function Home() {
   const teachers = await featuredTeachers();
 
@@ -72,6 +87,13 @@ export default async function Home() {
             </p>
             <div className="reveal d3" style={{ marginTop: 32 }}>
               <HeroSearch />
+              {HERO_PHOTO && (
+                <div className="hero-trust">
+                  <span><Icon name="check" /> Verified teachers</span>
+                  <span><Icon name="pin" /> Near you</span>
+                  <span><Icon name="hammer" /> Hands-on learning</span>
+                </div>
+              )}
             </div>
           </div>
           {!HERO_PHOTO && (
@@ -98,28 +120,31 @@ export default async function Home() {
             </div>
           )}
         </div>
+        {HERO_PHOTO && (
+          <div className="container hero-cats reveal d3">
+            <h2>Explore popular skill categories</h2>
+            <div className="cat-grid">
+              {CATEGORIES.slice(0, 4).map((c) => (
+                <CategoryCard key={c.name} c={c} />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="container">
-        <section className="section" style={{ paddingTop: 8 }} aria-labelledby="skills-h">
+        <section className="section" style={{ paddingTop: HERO_PHOTO ? 48 : 8 }} aria-labelledby="skills-h">
           <div className="section-head">
-            <h2 id="skills-h" style={{ fontSize: "clamp(1.3rem, 2.4vw, 1.6rem)" }}>Explore popular skills near you</h2>
+            <h2 id="skills-h" style={{ fontSize: "clamp(1.3rem, 2.4vw, 1.6rem)" }}>
+              {HERO_PHOTO ? "More skills to learn" : "Explore popular skills near you"}
+            </h2>
             <Link href="/search" className="link">
               Browse all teachers
             </Link>
           </div>
           <div className="cat-grid">
-            {CATEGORIES.slice(0, 8).map((c) => (
-              <Link key={c.name} href={`/search?q=${encodeURIComponent(c.name)}`} className="cat">
-                <span className={`icon-tile${c.tone === "amber" ? " amber" : ""}`}>
-                  <Icon name={c.icon} />
-                </span>
-                <span>
-                  <strong>{c.name}</strong>
-                  <span className="sub">{c.sub}</span>
-                </span>
-                <Icon name="chevronRight" className="arrow" />
-              </Link>
+            {(HERO_PHOTO ? CATEGORIES.slice(4) : CATEGORIES.slice(0, 8)).map((c) => (
+              <CategoryCard key={c.name} c={c} />
             ))}
           </div>
         </section>
