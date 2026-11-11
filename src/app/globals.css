@@ -280,41 +280,48 @@ body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-menu > summary { backgroun
    runs behind it, and fills 100dvh. Spacing clamps on viewport height so the copy, search and all
    four category cards fit on standard desktops; on small phones it simply grows and scrolls. */
 .hero.has-photo {
-  color: #fff; background: var(--forest);
+  color: #fff; background: rgb(10, 65, 47);
   --hero-nav: calc(var(--nav-h) + 1px);
   margin-top: calc(-1 * var(--hero-nav));
   padding: calc(var(--hero-nav) + clamp(8px, 3.6vh, 56px)) 0 clamp(16px, 3.4vh, 40px);
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column;
 }
-/* Shade under the nav for link legibility, and a full-width bottom shade so the category
-   cards sit on a calm base, with no seam at the photo's edge */
+/* Desktop overlay: strong forest green behind the copy on the left, fading to nothing on the right so
+   the teacher and learner stay clear and natural. A light shade sits under the nav and behind the
+   category cards only; the photo itself keeps just a narrow fade where it meets the solid green. */
 .hero.has-photo::before {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(12, 42, 33, 0.62) 0, rgba(12, 42, 33, 0) calc(var(--nav-h) * 2.2)),
-    linear-gradient(0deg, rgba(12, 42, 33, 0.9) 0%, rgba(12, 42, 33, 0.35) 26%, rgba(12, 42, 33, 0) 48%);
+    linear-gradient(180deg, rgba(10, 65, 47, 0.38) 0, rgba(10, 65, 47, 0) calc(var(--nav-h) * 1.6)),
+    linear-gradient(0deg, rgba(8, 40, 30, 0.5) 0%, rgba(8, 40, 30, 0.16) 18%, rgba(8, 40, 30, 0) 32%),
+    linear-gradient(90deg, rgba(10, 65, 47, 0.96) 0%, rgba(10, 65, 47, 0.86) 24%, rgba(10, 65, 47, 0.42) 42%, rgba(10, 65, 47, 0.08) 60%, rgba(10, 65, 47, 0) 76%);
 }
 .hero.has-photo > .container { z-index: 2; }
-.hero.has-photo .hero-photo { position: absolute; top: 0; right: 0; bottom: 0; width: min(64%, 1000px); background-size: cover; background-position: 40% 30%; }
+.hero.has-photo .hero-photo { position: absolute; top: 0; right: 0; bottom: 0; width: min(62%, 1120px); background-size: cover; background-position: 42% 28%; }
 .hero.has-photo .hero-photo::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, var(--forest) 0%, rgba(23, 76, 60, 0.85) 16%, rgba(23, 76, 60, 0.3) 42%, rgba(23, 76, 60, 0) 68%);
+  background: linear-gradient(90deg, rgb(10, 65, 47) 0%, rgba(10, 65, 47, 0) 20%);
 }
+.hero.has-photo h1, .hero.has-photo .lead { text-shadow: 0 2px 18px rgba(4, 28, 20, 0.35); }
 @media (max-width: 999px) {
-  .hero.has-photo .hero-photo { width: 100%; background-position: 70% 25%; }
-  .hero.has-photo .hero-photo::after { background: linear-gradient(180deg, rgba(12, 42, 33, 0.55) 0%, rgba(12, 42, 33, 0.82) 45%, var(--forest-900) 100%); }
+  /* Phones and tablets: text sits over the photo, so a top-to-bottom shade keeps it readable */
+  .hero.has-photo::before { background: linear-gradient(180deg, rgba(10, 65, 47, 0.4) 0, rgba(10, 65, 47, 0) calc(var(--nav-h) * 1.6)); }
+  /* One screen of photo (not the whole tall hero), focused on the learner's face, fading into the hero green */
+  .hero.has-photo .hero-photo { width: 100%; bottom: auto; height: 100vh; height: 100svh; background-position: 64% 38%; }
+  .hero.has-photo .hero-photo::after { background: linear-gradient(180deg, rgba(10, 65, 47, 0.5) 0%, rgba(10, 65, 47, 0.74) 45%, rgb(10, 65, 47) 100%); }
 }
 .hero.has-photo .hero-grid { flex: 1 0 auto; }
-.hero.has-photo h1 { font-size: clamp(2.3rem, min(6.4vw, 8.3vh), 4.6rem); margin: clamp(10px, 1.8vh, 18px) 0 clamp(10px, 2vh, 20px); }
-.hero.has-photo .lead { font-size: clamp(1rem, min(1.6vw, 2.7vh), 1.35rem); color: rgba(255, 255, 255, 0.92); margin: 0; max-width: 640px; }
+.hero.has-photo h1 { font-size: clamp(2.3rem, min(6.4vw, 7.6vh), 4.6rem); margin: clamp(8px, 1.4vh, 18px) 0 clamp(8px, 1.6vh, 20px); }
+.hero.has-photo .lead { font-size: clamp(1rem, min(1.6vw, 2.7vh), 1.35rem); color: rgba(255, 255, 255, 0.92); margin: 0; max-width: min(640px, 44vw); }
+@media (max-width: 999px) { .hero.has-photo .lead { max-width: 640px; } }
 .hero.has-photo .eyebrow { font-size: clamp(0.78rem, min(1.1vw, 2vh), 1rem); gap: 14px; }
 .hero.has-photo .eyebrow::before { width: 40px; }
 /* Photo hero uses a wider frame than the 1200px page container, as in the design */
 .hero.has-photo > .container { max-width: 1760px; padding-inline: clamp(16px, 6.4vw, 124px); }
 @media (min-width: 1000px) { .hero.has-photo .hero-grid { grid-template-columns: minmax(0, 880px) 1fr; } }
-/* Three-line headline as in the design where the screen is tall enough; short screens keep two lines */
-@media (min-height: 850px) { .hero.has-photo h1 { max-width: 11ch; } }
+/* Three-line headline as in the design, so it never runs across the teacher's face */
+.hero.has-photo h1 { max-width: 11ch; }
 .hero-actions { margin-top: clamp(16px, 3.2vh, 34px); }
 .hero.has-photo .hero-meta { margin-top: clamp(6px, 1.4vh, 16px); }
 .hero.has-photo .hero-trust { margin-top: clamp(12px, 2.6vh, 28px); font-size: clamp(0.92rem, min(1.2vw, 2.1vh), 1.1rem); font-weight: 600; color: #fff; }
@@ -344,7 +351,7 @@ body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-menu > summary { backgroun
 .hero-trust span { display: inline-flex; align-items: center; gap: 8px; padding-right: 16px; margin-right: 16px; border-right: 1px solid rgba(255, 255, 255, 0.3); }
 .hero-trust span:last-child { border-right: 0; margin-right: 0; }
 .hero-trust .icon { color: var(--amber); width: 17px; height: 17px; }
-.hero-cats { position: relative; margin-top: clamp(16px, 4.4vh, 56px); }
+.hero-cats { position: relative; margin-top: clamp(14px, 3.4vh, 56px); }
 .hero-cats h2 { color: #fff; font-size: clamp(1.15rem, min(2vw, 3.4vh), 1.85rem); margin-bottom: clamp(10px, 2vh, 22px); }
 .hero-cats .cat-grid { gap: clamp(12px, 1.4vw, 20px); }
 .hero-cats .cat { background: rgba(250, 246, 236, 0.97); border-color: transparent; color: var(--ink); border-radius: 16px; padding: clamp(10px, 2vh, 22px) clamp(12px, 1.3vw, 20px); gap: clamp(10px, 1.1vw, 18px); }
