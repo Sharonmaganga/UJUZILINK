@@ -109,30 +109,41 @@ export default function RegisterForm({
 
       <label className="field">
         <span>Full name</span>
-        <input name="name" autoComplete="name" {...a11y("name")} />
+        <div className="input-wrap has-icon">
+          <Icon name="user" className="input-icon" />
+          <input name="name" autoComplete="name" placeholder="Enter your full name" {...a11y("name")} />
+        </div>
         {err("name")}
       </label>
       <label className="field">
         <span>Email</span>
-        <input name="email" type="email" autoComplete="email" inputMode="email" {...a11y("email")} />
+        <div className="input-wrap has-icon">
+          <Icon name="mail" className="input-icon" />
+          <input name="email" type="email" autoComplete="email" inputMode="email" placeholder="Enter your email address" {...a11y("email")} />
+        </div>
         {err("email")}
       </label>
       <label className="field">
         <span>Phone number <span className="hint">· optional</span></span>
-        <input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="0712 345 678" {...a11y("phone")} />
+        <div className="input-wrap has-icon">
+          <Icon name="phone" className="input-icon" />
+          <input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="0712 345 678" {...a11y("phone")} />
+        </div>
         {err("phone")}
       </label>
       <label className="field">
         <span>Password</span>
-        <PasswordInput name="password" autoComplete="new-password" {...a11y("password")} />
+        <PasswordInput name="password" autoComplete="new-password" placeholder="Create a password" {...a11y("password")} />
         {err("password") || <span className="hint">At least 8 characters.</span>}
       </label>
       <button className="btn lg block" disabled={loading}>
         {loading ? <><Icon name="loader" className="spin" /> Creating account…</> : role === "TEACHER" ? "Create account and continue" : "Create free account"}
       </button>
-      <p className="xs muted" style={{ margin: 0, textAlign: "center" }}>
-        Learners never pay Ujuzi Link. You pay teachers directly, once you&apos;ve met and agreed.
-      </p>
+      {role === "LEARNER" && (
+        <p className="xs muted auth-footnote">
+          Learners never pay Ujuzi Link. You pay teachers directly, once you&apos;ve met and agreed.
+        </p>
+      )}
     </form>
   );
 }

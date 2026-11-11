@@ -693,18 +693,64 @@ dialog.modal::backdrop { background: rgba(12, 42, 33, 0.45); backdrop-filter: bl
 .modal-body h2 { font-size: 1.3rem; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 
-/* ---------- Auth ---------- */
-.auth { display: grid; min-height: calc(100vh - var(--nav-h)); }
-@media (min-width: 960px) { .auth { grid-template-columns: 1fr 1fr; } }
-.auth-aside { display: none; position: relative; overflow: hidden; background: var(--forest); color: #fff; padding: 56px; flex-direction: column; justify-content: space-between; }
-@media (min-width: 960px) { .auth-aside { display: flex; } }
-.auth-aside h2 { color: #fff; font-size: clamp(2rem, 3vw, 2.6rem); max-width: 420px; }
-.auth-aside p { color: rgba(255, 255, 255, 0.78); max-width: 420px; }
-.auth-aside .arch-deco { position: absolute; right: -60px; bottom: -40px; width: 300px; height: 360px; background: rgba(255, 255, 255, 0.06); border-radius: 999px 999px 0 0; }
-.auth-aside .arch-deco::after { content: ""; position: absolute; left: 34%; right: 34%; top: 14%; height: 34%; background: var(--amber); border-radius: 999px; opacity: 0.9; }
-.auth-main { display: flex; align-items: center; justify-content: center; padding: 40px 16px 72px; }
-.auth-card { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
-.auth-card h1 { font-size: clamp(1.8rem, 3vw, 2.2rem); }
+/* ---------- Inputs with icons ---------- */
+.input-wrap.has-icon .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--ink); opacity: 0.7; pointer-events: none; }
+.input-wrap.has-icon input { padding-left: 46px; }
+.input-wrap.has-action input { padding-right: 52px; }
+.input-action { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--ink); cursor: pointer; }
+.input-action:hover { background: rgba(23, 76, 60, 0.07); }
+.input-action .icon { width: 20px; height: 20px; }
+
+/* ---------- Auth: fixed-screen split layout ----------
+   Login and register are one screen: the footer is hidden and the two panels fill the
+   viewport below the sticky nav (its height plus its 1px border). Spacing and type clamp on
+   both width and height so short laptop screens fit too. If content genuinely cannot fit
+   (validation errors on a tiny or zoomed screen) the grid row grows and the page scrolls
+   normally: nothing is clipped and there is no nested scrollbar. */
+body:has(.auth) .footer { display: none; }
+.auth {
+  --auth-offset: calc(var(--nav-h) + 1px);
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  height: calc(100vh - var(--auth-offset));
+  height: calc(100dvh - var(--auth-offset));
+}
+@media (min-width: 960px) { .auth { grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr); } }
+@media (min-width: 1200px) { .auth { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+.auth-aside { display: none; position: relative; overflow: hidden; background: var(--forest-900); color: #fff; }
+@media (min-width: 960px) { .auth-aside { display: flex; align-items: center; } }
+.auth-photo { position: absolute; inset: 0; background-size: cover; background-position: 62% 30%; background-repeat: no-repeat; }
+.auth-aside.has-photo::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(12, 42, 33, 0.94) 0%, rgba(12, 42, 33, 0.84) 40%, rgba(12, 42, 33, 0.5) 72%, rgba(12, 42, 33, 0.3) 100%),
+    linear-gradient(0deg, rgba(12, 42, 33, 0.55) 0%, rgba(12, 42, 33, 0) 45%);
+}
+.auth-aside-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; width: 100%; max-width: 640px; padding: clamp(24px, 5vh, 64px) clamp(32px, 5vw, 88px); }
+.auth-aside .eyebrow { color: var(--amber); margin-bottom: clamp(16px, 4.5vh, 52px); }
+.auth-aside h2 { color: #fff; font-size: clamp(2rem, min(3.7vw, 6.6vh), 4.1rem); line-height: 1.04; letter-spacing: -0.035em; font-weight: 800; max-width: 11.5ch; }
+.auth-swoosh { width: clamp(120px, 11vw, 190px); height: 16px; margin: clamp(8px, 1.6vh, 16px) 0 clamp(14px, 3vh, 30px); fill: none; stroke: var(--amber); stroke-width: 5; stroke-linecap: round; overflow: visible; }
+.auth-swoosh path { vector-effect: non-scaling-stroke; }
+.auth-aside p { color: rgba(255, 255, 255, 0.88); font-size: clamp(0.98rem, min(1.35vw, 2.4vh), 1.25rem); line-height: 1.5; max-width: 30ch; margin: 0 0 clamp(18px, 4.5vh, 52px); }
+.auth-benefits { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(10px, 2vh, 18px); font-weight: 600; font-size: clamp(0.9rem, min(1.1vw, 2vh), 1.05rem); }
+.auth-benefits li { display: flex; align-items: center; gap: 16px; }
+.auth-benefit-icon { width: clamp(38px, 6vh, 52px); height: clamp(38px, 6vh, 52px); border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255, 255, 255, 0.1); color: var(--amber); }
+.auth-benefit-icon .icon { width: 50%; height: 50%; }
+
+/* margin: auto centres the card but collapses to 0 when it overflows, so the top stays reachable */
+.auth-main { display: flex; flex-direction: column; min-width: 0; padding: clamp(12px, 2.4vh, 40px) clamp(16px, 5vw, 72px); }
+.auth-card { margin: auto; width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: clamp(8px, 1.45vh, 18px); }
+.auth-card h1 { color: var(--forest); font-size: clamp(1.75rem, min(3vw, 5.4vh), 2.75rem); line-height: 1.05; }
+.auth-card .field { gap: 4px; }
+.auth-card input { min-height: clamp(42px, 5.4vh, 50px); padding-top: 8px; padding-bottom: 8px; }
+.auth-card .hint, .auth-card .field-error { line-height: 1.35; }
+.auth-card .alert { padding: clamp(10px, 1.5vh, 14px) 16px; font-size: 0.9rem; }
+.auth-card .segmented { gap: 12px; padding: 0; background: none; border: 0; }
+.auth-card .segmented button { min-height: clamp(42px, 5.8vh, 54px); border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); border-radius: 12px; }
+.auth-card .segmented button[aria-checked="true"] { background: var(--forest); border-color: var(--forest); color: #fff; box-shadow: none; }
+.auth-card .btn.lg { min-height: clamp(46px, 6vh, 56px); padding-top: 10px; padding-bottom: 10px; }
+.auth-card h1 + p, .auth-card > div > p { line-height: 1.4; }
+.auth-footnote { margin: 0; text-align: center; }
 
 /* ---------- Footer ---------- */
 .footer { background: var(--forest-900); color: rgba(255, 255, 255, 0.7); padding: 64px 0 28px; margin-top: 0; }

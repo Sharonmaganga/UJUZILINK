@@ -54,11 +54,14 @@ export default function LoginForm({ callbackUrl, registered }: { callbackUrl: st
       )}
       <label className="field">
         <span>Email</span>
-        <input name="email" type="email" required autoComplete="email" inputMode="email" aria-invalid={!!error} />
+        <div className="input-wrap has-icon">
+          <Icon name="mail" className="input-icon" />
+          <input name="email" type="email" required autoComplete="email" inputMode="email" placeholder="Enter your email address" aria-invalid={!!error} />
+        </div>
       </label>
       <label className="field">
         <span>Password</span>
-        <PasswordInput name="password" required autoComplete="current-password" aria-invalid={!!error} />
+        <PasswordInput name="password" required autoComplete="current-password" placeholder="Enter your password" aria-invalid={!!error} />
       </label>
       <button className="btn lg block" disabled={loading}>
         {loading ? <><Icon name="loader" className="spin" /> Logging in…</> : "Log in"}
