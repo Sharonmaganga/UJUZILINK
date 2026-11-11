@@ -29,8 +29,14 @@ async function featuredTeachers(): Promise<TeacherCardData[]> {
   }
 }
 
-/** Drop a licensed photo at public/images/hero.jpg to switch the hero to the photographic layout. */
-const HERO_PHOTO = existsSync(path.join(process.cwd(), "public", "images", "hero.jpg")) ? "/images/hero.jpg" : null;
+const heroImage = (name: string) => (existsSync(path.join(process.cwd(), "public", "images", name)) ? `/images/${name}` : null);
+/**
+ * Photographic hero. public/images/hero-wide.jpg (a landscape photo, people on the right, ideally
+ * 2400px+ wide) runs full-bleed behind the copy as in the design; otherwise public/images/hero.jpg
+ * sits on the right. With neither, the hero uses the illustrated layout.
+ */
+const HERO_WIDE = heroImage("hero-wide.jpg");
+const HERO_PHOTO = HERO_WIDE ?? heroImage("hero.jpg");
 
 const FAQS = [
   ["Is Ujuzi Link really free for learners?", "Yes. Searching, creating an account and contacting teachers is free. You only pay the teacher for lessons, directly, once you've met and agreed on a price."],
@@ -74,7 +80,7 @@ export default async function Home() {
 
   return (
     <>
-      <section className={`hero${HERO_PHOTO ? " has-photo" : ""}`}>
+      <section className={`hero${HERO_PHOTO ? " has-photo" : ""}${HERO_WIDE ? " photo-wide" : ""}`}>
         {HERO_PHOTO && <div className="hero-photo" style={{ backgroundImage: `url(${HERO_PHOTO})` }} aria-hidden />}
         <div className="container hero-grid">
           <div>

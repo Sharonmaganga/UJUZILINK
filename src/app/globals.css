@@ -243,7 +243,7 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
 .nav-sheet a:not(.btn):hover { background: var(--canvas); }
 .nav-sheet .btn { margin-top: 6px; }
 .nav-actions { display: inline-flex; align-items: center; gap: 12px; margin-left: 16px; }
-.nav-actions .btn { min-height: 46px; padding: 0 22px; border-radius: 14px; font-size: 0.95rem; }
+.nav-actions .btn { min-height: 46px; padding: 0 24px; border-radius: 999px; font-size: 0.95rem; }
 .nav-actions .nav-cta { font-weight: 700; }
 @media (max-width: 1000px) {
   .nav-links { display: none; }
@@ -344,7 +344,45 @@ body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-menu > summary { backgroun
   .hero-bar-divider { flex-basis: 100%; width: auto; height: 1px; margin: 4px 6px 6px; }
   .hero-bar-place { flex: 1 1 0; padding-left: 10px; min-width: 0; }
   .hero-bar-place select { min-width: 0; max-width: 100%; }
-  .search-bar.hero-bar .btn { padding: 0 20px; margin-left: 8px; }
+  .search-bar.hero-bar .btn { padding: 0 18px; margin-left: 6px; }
+  .hero-bar-place { gap: 6px; padding-left: 6px; }
+  .hero-bar-place select { padding-right: 26px; font-size: 0.95rem; }
+}
+/* Frosted-glass pill search bar over the photo, with white text and an amber pill button */
+.hero.has-photo .search-bar.hero-bar {
+  background: rgba(255, 255, 255, 0.16); border: 1.5px solid rgba(255, 255, 255, 0.6); border-radius: 999px;
+  padding: 8px 8px 8px 14px; box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+.hero.has-photo .search-bar.hero-bar:focus-within { border-color: #fff; box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(244, 163, 64, 0.55); }
+.hero.has-photo .hero-bar-q .icon, .hero.has-photo .hero-bar-place .icon { color: #fff; }
+.hero.has-photo .hero-bar input { color: #fff; }
+.hero.has-photo .hero-bar input::placeholder { color: rgba(255, 255, 255, 0.86); }
+.hero.has-photo .hero-bar-divider { background: rgba(255, 255, 255, 0.4); }
+.hero.has-photo .hero-bar-place select {
+  color: #fff; font-weight: 600;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+.hero.has-photo .hero-bar-place select option { color: var(--ink); }
+.hero.has-photo .hero-bar .btn { border-radius: 999px; }
+@media (max-width: 640px) { .hero.has-photo .search-bar.hero-bar { border-radius: 26px; } }
+
+/* Category tiles in the hero: coral scissors, amber sparkle, as in the design */
+.hero-cats .cat { border-radius: 18px; }
+.hero-cats .icon-tile.amber { background: #fde4d8; color: #d4512b; }
+.hero-cats .icon-tile.sand { background: #fcedcf; color: #d98a12; }
+
+/* Full-bleed mode (public/images/hero-wide.jpg): the photo fills the hero behind the copy, with a
+   lighter green on the left so the workshop shows through, fading out before the people */
+.hero.photo-wide .hero-photo { width: 100%; background-position: 70% 30%; }
+.hero.photo-wide .hero-photo::after { display: none; }
+@media (min-width: 1000px) {
+  .hero.has-photo.photo-wide::before {
+    background:
+      linear-gradient(180deg, rgba(10, 65, 47, 0.42) 0, rgba(10, 65, 47, 0) calc(var(--nav-h) * 1.6)),
+      linear-gradient(0deg, rgba(8, 40, 30, 0.45) 0%, rgba(8, 40, 30, 0.12) 18%, rgba(8, 40, 30, 0) 30%),
+      linear-gradient(90deg, rgba(10, 65, 47, 0.88) 0%, rgba(10, 65, 47, 0.72) 28%, rgba(10, 65, 47, 0.34) 46%, rgba(10, 65, 47, 0.06) 62%, rgba(10, 65, 47, 0) 74%);
+  }
 }
 .hero.has-photo .search-bar { border-color: transparent; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.5); }
 .hero-trust { display: flex; flex-wrap: wrap; gap: 8px 0; margin-top: 18px; font-size: 0.92rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
