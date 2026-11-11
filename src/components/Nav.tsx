@@ -4,6 +4,7 @@ import SignOutButton from "./SignOutButton";
 import Logo from "./Logo";
 import Icon from "./Icon";
 import NavLink from "./NavLink";
+import NavScrollState from "./NavScrollState";
 
 export default async function Nav() {
   const session = await getSession();
@@ -28,7 +29,8 @@ export default async function Nav() {
 
   return (
     <header className="nav">
-      <div className="container nav-inner">
+      <NavScrollState />
+      <div className="nav-inner">
         <Link href="/" className="logo" aria-label="Ujuzi Link home">
           <Logo />
         </Link>
@@ -43,7 +45,7 @@ export default async function Nav() {
               <SignOutButton />
             </span>
           ) : (
-            <Link href="/login" className="btn sm" style={{ marginLeft: 12 }}>
+            <Link href="/login" className="btn sm nav-cta" style={{ marginLeft: 12 }}>
               Log in
             </Link>
           )}

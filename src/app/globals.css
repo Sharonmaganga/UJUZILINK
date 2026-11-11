@@ -223,7 +223,8 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
 
 /* ---------- Navigation ---------- */
 .nav { position: sticky; top: 0; z-index: 40; background: rgba(247, 246, 242, 0.86); backdrop-filter: saturate(160%) blur(14px); -webkit-backdrop-filter: saturate(160%) blur(14px); border-bottom: 1px solid var(--line); }
-.nav-inner { display: flex; align-items: center; gap: 24px; height: var(--nav-h); }
+/* Full-width bar: the logo sits near the viewport edge, independent of the 1200px content container */
+.nav-inner { display: flex; align-items: center; gap: 24px; height: var(--nav-h); padding: 0 clamp(16px, 2.6vw, 40px); }
 .nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .nav-links a:not(.btn), .nav-links .btn.ghost { padding: 8px 12px; border-radius: 10px; font-weight: 600; font-size: 0.92rem; color: var(--ink); transition: background-color 0.2s var(--ease); }
 .nav-links a:not(.btn):hover { background: rgba(23, 76, 60, 0.07); }
@@ -245,6 +246,23 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
   .nav-links { display: none; }
   .nav-menu { display: block; }
 }
+/* Homepage: the hero photograph runs behind a transparent nav until the page scrolls,
+   then the nav returns to the solid cream bar so links stay legible over page content. */
+body:has(.hero.has-photo) .nav { transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease); }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) { background: transparent; border-bottom-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .logo { color: #fff; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .logo-mark { background: #faf6ec; box-shadow: none; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .logo-mark svg { color: var(--forest); }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-links a:not(.btn),
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-links .btn.ghost { color: rgba(255, 255, 255, 0.92); }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-links a:not(.btn):hover,
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-links .btn.ghost:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-links a[aria-current="page"] { background: rgba(255, 255, 255, 0.14); color: #fff; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-cta { --bg: var(--amber); --bd: var(--amber); --fg: var(--forest-900); }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-cta:hover { --bg: #eb9426; --bd: #eb9426; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-user { border-left-color: rgba(255, 255, 255, 0.25); }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-avatar { background: rgba(255, 255, 255, 0.16); color: #fff; }
+body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-menu > summary { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.35); color: #fff; }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; padding: clamp(40px, 7vw, 88px) 0 clamp(48px, 7vw, 96px); overflow: hidden; }
@@ -254,9 +272,25 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
 .hero h1 em { font-style: normal; color: var(--forest); position: relative; white-space: nowrap; }
 .hero h1 em::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0.06em; height: 0.16em; background: var(--amber); border-radius: 4px; z-index: -1; opacity: 0.9; }
 /* Photographic hero: photo on the right, fading into forest green behind the copy */
-.hero.has-photo { color: #fff; background: var(--forest); padding-bottom: 40px; }
-/* Full-width bottom shade so the category cards sit on a calm base, with no seam at the photo's edge */
-.hero.has-photo::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(0deg, rgba(12, 42, 33, 0.9) 0%, rgba(12, 42, 33, 0.35) 26%, rgba(12, 42, 33, 0) 48%); }
+/* One full-screen block: it slides up under the sticky nav (nav height + 1px border) so the photo
+   runs behind it, and fills 100dvh. Spacing clamps on viewport height so the copy, search and all
+   four category cards fit on standard desktops; on small phones it simply grows and scrolls. */
+.hero.has-photo {
+  color: #fff; background: var(--forest);
+  --hero-nav: calc(var(--nav-h) + 1px);
+  margin-top: calc(-1 * var(--hero-nav));
+  padding: calc(var(--hero-nav) + clamp(8px, 3.6vh, 56px)) 0 clamp(16px, 3.4vh, 40px);
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+}
+/* Shade under the nav for link legibility, and a full-width bottom shade so the category
+   cards sit on a calm base, with no seam at the photo's edge */
+.hero.has-photo::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(12, 42, 33, 0.62) 0, rgba(12, 42, 33, 0) calc(var(--nav-h) * 2.2)),
+    linear-gradient(0deg, rgba(12, 42, 33, 0.9) 0%, rgba(12, 42, 33, 0.35) 26%, rgba(12, 42, 33, 0) 48%);
+}
 .hero.has-photo > .container { z-index: 2; }
 .hero.has-photo .hero-photo { position: absolute; top: 0; right: 0; bottom: 0; width: min(64%, 1000px); background-size: cover; background-position: 40% 30%; }
 .hero.has-photo .hero-photo::after {
@@ -267,16 +301,22 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
   .hero.has-photo .hero-photo { width: 100%; background-position: 70% 25%; }
   .hero.has-photo .hero-photo::after { background: linear-gradient(180deg, rgba(12, 42, 33, 0.55) 0%, rgba(12, 42, 33, 0.82) 45%, var(--forest-900) 100%); }
 }
-.hero.has-photo .hero-grid { min-height: min(560px, 62vh); }
+.hero.has-photo .hero-grid { flex: 1 0 auto; }
+.hero.has-photo h1 { font-size: clamp(2.3rem, min(6.4vw, 8.3vh), 4.6rem); margin: clamp(10px, 1.8vh, 18px) 0 clamp(10px, 2vh, 20px); }
+.hero.has-photo .lead { font-size: clamp(1rem, min(1.6vw, 2.5vh), 1.2rem); margin: 0; }
+.hero-actions { margin-top: clamp(16px, 3.2vh, 32px); }
+.hero.has-photo .hero-meta { margin-top: clamp(6px, 1.4vh, 16px); }
+.hero.has-photo .hero-trust { margin-top: clamp(8px, 1.6vh, 18px); }
 @media (min-width: 1000px) { .hero.has-photo .hero-grid { grid-template-columns: minmax(0, 620px) 1fr; } }
 .hero.has-photo .search-bar { border-color: transparent; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.5); }
 .hero-trust { display: flex; flex-wrap: wrap; gap: 8px 0; margin-top: 18px; font-size: 0.92rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
 .hero-trust span { display: inline-flex; align-items: center; gap: 8px; padding-right: 16px; margin-right: 16px; border-right: 1px solid rgba(255, 255, 255, 0.3); }
 .hero-trust span:last-child { border-right: 0; margin-right: 0; }
 .hero-trust .icon { color: var(--amber); width: 17px; height: 17px; }
-.hero-cats { position: relative; margin-top: clamp(32px, 6vw, 64px); }
-.hero-cats h2 { color: #fff; font-size: clamp(1.15rem, 2vw, 1.4rem); margin-bottom: 16px; }
-.hero-cats .cat { background: rgba(250, 246, 236, 0.97); border-color: transparent; color: var(--ink); }
+.hero-cats { position: relative; margin-top: clamp(16px, 4.4vh, 56px); }
+.hero-cats h2 { color: #fff; font-size: clamp(1.1rem, min(2vw, 3vh), 1.4rem); margin-bottom: clamp(8px, 1.6vh, 16px); }
+.hero-cats .cat { background: rgba(250, 246, 236, 0.97); border-color: transparent; color: var(--ink); padding: clamp(10px, 1.6vh, 16px) clamp(12px, 1.2vw, 16px); gap: clamp(10px, 1vw, 16px); }
+.hero-cats .icon-tile { width: clamp(38px, 5.4vh, 48px); height: clamp(38px, 5.4vh, 48px); }
 @media (max-width: 640px) { .hero-trust { gap: 8px 18px; } .hero-trust span { border-right: 0; padding-right: 0; margin-right: 0; } }
 .hero-cats .cat:hover { box-shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.5); }
 .hero-cats .cat-grid { grid-template-columns: 1fr; }

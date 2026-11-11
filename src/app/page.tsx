@@ -85,7 +85,7 @@ export default async function Home() {
             <p className="lead reveal d2">
               Meet verified teachers near you. Learn practical skills at your own pace, in your own community.
             </p>
-            <div className="reveal d3" style={{ marginTop: 32 }}>
+            <div className="reveal d3 hero-actions">
               <HeroSearch />
               {HERO_PHOTO && (
                 <div className="hero-trust">
