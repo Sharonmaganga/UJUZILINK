@@ -12,7 +12,7 @@ export type Category = {
 
 /** Skill categories (Figma "Browse by skill"). Search matches any of a category's terms. */
 export const CATEGORIES: Category[] = [
-  { slug: "auto-mechanics", name: "Auto mechanics", sub: "Maintenance · Diagnostics", icon: "wrench", tone: "sage", terms: ["mechanic", "motor", "garage", "auto", "vehicle"] },
+  { slug: "auto-mechanics", name: "Auto mechanics", sub: "Maintenance · Diagnostics", icon: "car", tone: "sage", terms: ["mechanic", "motor", "garage", "auto", "vehicle"] },
   { slug: "tailoring", name: "Tailoring", sub: "Sewing · Alterations", icon: "scissors", tone: "amber", terms: ["tailor", "sewing", "dressmak", "fashion", "embroider"] },
   { slug: "hair-beauty", name: "Hair & beauty", sub: "Styling · Braiding", icon: "sparkles", tone: "sand", terms: ["hair", "salon", "braid", "beauty", "nail", "makeup", "barber"] },
   { slug: "digital-skills", name: "Digital skills", sub: "Coding · Design", icon: "laptop", tone: "mist", terms: ["coding", "web", "computer", "digital", "programming", "graphic"] },

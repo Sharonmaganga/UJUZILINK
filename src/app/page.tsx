@@ -89,9 +89,9 @@ export default async function Home() {
               <HeroSearch />
               {HERO_PHOTO && (
                 <div className="hero-trust">
-                  <span><Icon name="check" /> Verified teachers</span>
+                  <span><Icon name="shield" /> Verified teachers</span>
                   <span><Icon name="pin" /> Near you</span>
-                  <span><Icon name="hammer" /> Hands-on learning</span>
+                  <span><Icon name="wrench" /> Hands-on learning</span>
                 </div>
               )}
             </div>

@@ -1,48 +1,41 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Icon from "./Icon";
 import { PLACES } from "@/lib/places";
 
-/** Skill search with a town selector. "Use my location" hands over to the search page, which asks the browser. */
+/**
+ * Skill search with the location picker inside the bar. "Near me" hands over to the search page,
+ * which asks the browser for the user's location; a town searches from that town's centre.
+ */
 export default function HeroSearch() {
-  const form = useRef<HTMLFormElement>(null);
-  const [near, setNear] = useState("me");
-
-  function locateMe() {
-    setNear("me");
-    // Let state flush to the hidden select before submitting.
-    requestAnimationFrame(() => form.current?.requestSubmit());
-  }
+  const [near, setNear] = useState<string>("nairobi");
 
   return (
-    <form ref={form} action="/search" role="search" aria-label="Find a teacher">
-      <div className="search-bar">
-        <Icon name="search" />
-        <label htmlFor="hero-q" className="sr-only">
-          What skill would you like to learn?
-        </label>
-        <input id="hero-q" name="q" placeholder="What skill would you like to learn?" autoComplete="off" />
-        <button className="btn" type="submit" aria-label="Search">
-          <span className="btn-label">Search</span> <Icon name="arrow" />
-        </button>
-      </div>
-      <div className="hero-meta">
-        <button type="button" className="ghost-link" onClick={locateMe}>
-          <Icon name="locate" /> Use my location
-        </button>
-        <span className="hero-dot" aria-hidden />
-        <label className="place-select">
-          <Icon name="map" />
+    <form action="/search" role="search" aria-label="Find a teacher">
+      <div className="search-bar hero-bar">
+        <span className="hero-bar-q">
+          <Icon name="search" />
+          <label htmlFor="hero-q" className="sr-only">
+            What skill would you like to learn?
+          </label>
+          <input id="hero-q" name="q" placeholder="What skill would you like to learn?" autoComplete="off" />
+        </span>
+        <span className="hero-bar-divider" aria-hidden />
+        <label className="hero-bar-place">
+          <Icon name="pin" />
           <span className="sr-only">Search near</span>
           <select name="near" value={near} onChange={(e) => setNear(e.target.value)}>
-            <option value="me">Near me</option>
             {PLACES.map((p) => (
               <option key={p.slug} value={p.slug}>
                 {p.name}, Kenya
               </option>
             ))}
+            <option value="me">Near me (use my location)</option>
           </select>
         </label>
+        <button className="btn amber" type="submit">
+          Search <Icon name="arrow" />
+        </button>
       </div>
     </form>
   );

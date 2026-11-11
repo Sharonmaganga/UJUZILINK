@@ -45,9 +45,14 @@ export default async function Nav() {
               <SignOutButton />
             </span>
           ) : (
-            <Link href="/login" className="btn sm nav-cta" style={{ marginLeft: 12 }}>
-              Log in
-            </Link>
+            <span className="nav-actions">
+              <Link href="/login" className="btn secondary nav-login">
+                Log in
+              </Link>
+              <Link href="/register" className="btn amber nav-cta">
+                Get Started
+              </Link>
+            </span>
           )}
         </nav>
 
