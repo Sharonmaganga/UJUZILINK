@@ -397,17 +397,25 @@ body:has(.hero.has-photo) .nav:not(.is-scrolled) .nav-menu > summary { backgroun
 .skill-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 760px) { .skill-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1100px) { .skill-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.skill-card { display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 8px 8px 16px; background: var(--surface); border-radius: var(--r-lg); border: 1px solid transparent; box-shadow: var(--shadow-sm); transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s var(--ease); }
-.skill-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: rgba(23, 76, 60, 0.25); }
-.skill-media { aspect-ratio: 16 / 10; border-radius: var(--r); overflow: hidden; display: flex; align-items: flex-start; padding: 16px; }
-.skill-media img { width: calc(100% + 32px); height: calc(100% + 32px); margin: -16px; object-fit: cover; transition: transform 0.5s var(--ease); }
+.skill-grid > li { min-width: 0; }
+/* Card: 20px radius, photo on top (16:10, 14px radius), text below. Only the photo moves on hover. */
+.skill-card { display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 8px 8px 16px; background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--shadow-sm); transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease); }
+.skill-card:hover { box-shadow: var(--shadow); border-color: rgba(23, 76, 60, 0.3); }
+.skill-media { position: relative; aspect-ratio: 16 / 10; border-radius: var(--r); overflow: hidden; display: flex; align-items: flex-start; padding: 16px; flex-shrink: 0; }
+.skill-media.has-photo { padding: 0; background: var(--sage-50); }
+.skill-media img { object-fit: cover; transition: transform 0.3s var(--ease); }
 .skill-card:hover .skill-media img { transform: scale(1.04); }
-.skill-media .icon { width: 34px; height: 34px; stroke-width: 1.6; }
+.skill-media > .icon { width: 34px; height: 34px; stroke-width: 1.6; }
+/* Small category badge over the photo for quick scanning */
+.skill-badge { position: absolute; left: 10px; top: 10px; z-index: 1; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.92); color: var(--forest); box-shadow: 0 2px 8px rgba(12, 42, 33, 0.18); }
+.skill-badge .icon { width: 18px; height: 18px; stroke-width: 2; }
+@media (prefers-reduced-motion: reduce) { .skill-media img { transition: none; } .skill-card:hover .skill-media img { transform: none; } }
 .tone-sage { background: var(--sage); color: var(--forest); }
 .tone-amber { background: #f3dfc6; color: #9a4f00; }
 .tone-sand { background: #e9ddd2; color: #6b4a2b; }
 .tone-mist { background: #dfe6ec; color: #2b4a63; }
-.skill-body { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+.skill-body { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; flex: 1; }
+.skill-body .skill-count { margin-top: auto; padding-top: 8px; }
 .skill-body strong { font-size: 1.02rem; letter-spacing: -0.015em; }
 .skill-count { margin-top: 8px; font-size: 0.78rem; font-weight: 700; color: var(--forest); }
 .skill-count.none { color: var(--muted); font-weight: 600; }

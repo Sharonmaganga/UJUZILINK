@@ -4,6 +4,7 @@ import path from "path";
 import { prisma } from "@/lib/prisma";
 import { activeWhere } from "@/lib/subscription";
 import { CATEGORIES, categoryHref, matchesCategory } from "@/lib/skills";
+import { SKILL_PHOTOS } from "@/lib/skillPhotos";
 import Icon from "@/components/Icon";
 import SkillsBrowser, { type SkillItem } from "./SkillsBrowser";
 
@@ -33,6 +34,9 @@ export default async function SkillsPage() {
 
   const items: SkillItem[] = CATEGORIES.map((c) => {
     const matching = (teachers ?? []).filter((t) => matchesCategory(c, t.skill, t.otherSkills.join(" "), t.businessName, t.bio));
+    const photo = SKILL_PHOTOS[c.slug];
+    // Standard categories use their licensed category photo; a teacher's premises photo is only a fallback.
+    const premises = matching.find((t) => t.premisesPhotoUrls[0])?.premisesPhotoUrls[0] ?? null;
     return {
       key: c.slug,
       name: c.name,
@@ -41,7 +45,11 @@ export default async function SkillsPage() {
       tone: c.tone,
       href: categoryHref(c),
       count: teachers ? matching.length : null,
-      image: matching.find((t) => t.premisesPhotoUrls[0])?.premisesPhotoUrls[0] ?? null,
+      image: photo
+        ? { src: photo.src, alt: photo.alt, focus: photo.focus, optimize: true }
+        : premises
+          ? { src: premises, alt: "", focus: "50% 50%", optimize: false }
+          : null,
       keywords: c.terms.join(" "),
     };
   });
@@ -65,7 +73,7 @@ export default async function SkillsPage() {
       tone: "sage",
       href: `/search?q=${encodeURIComponent(e.name)}`,
       count: e.count,
-      image: e.image,
+      image: e.image ? { src: e.image, alt: "", focus: "50% 50%", optimize: false } : null,
       keywords: key,
     });
   }

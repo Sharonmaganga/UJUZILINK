@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
@@ -11,14 +12,20 @@ export type SkillItem = {
   tone: string;
   href: string;
   count: number | null;
-  image: string | null;
+  /** optimize: false for teacher-uploaded premises photos served by /files (already size-checked on upload) */
+  image: { src: string; alt: string; focus: string; optimize: boolean } | null;
   keywords: string;
 };
+
+// 4 columns from 1100px, 3 from 760px, otherwise 2 (see .skill-grid)
+const CARD_SIZES = "(min-width: 1240px) 290px, (min-width: 1100px) 24vw, (min-width: 760px) 31vw, 48vw";
 
 /** Filterable grid of skill cards (search box + availability filter). */
 export default function SkillsBrowser({ items, countsAvailable }: { items: SkillItem[]; countsAvailable: boolean }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "available">("all");
+  // Photos that failed to load fall back to the tinted tile with the category icon.
+  const [failed, setFailed] = useState<Set<string>>(new Set());
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -76,10 +83,21 @@ export default function SkillsBrowser({ items, countsAvailable }: { items: Skill
           {shown.map((i) => (
             <li key={i.key}>
               <Link href={i.href} className="skill-card">
-                <div className={`skill-media tone-${i.tone}`}>
-                  {i.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={i.image} alt="" loading="lazy" />
+                <div className={`skill-media tone-${i.tone}${i.image && !failed.has(i.key) ? " has-photo" : ""}`}>
+                  {i.image && !failed.has(i.key) ? (
+                    <>
+                      <Image
+                        src={i.image.src}
+                        alt={i.image.alt}
+                        fill
+                        sizes={CARD_SIZES}
+                        quality={72}
+                        unoptimized={!i.image.optimize}
+                        style={{ objectPosition: i.image.focus }}
+                        onError={() => setFailed((s) => new Set(s).add(i.key))}
+                      />
+                      <span className="skill-badge" aria-hidden><Icon name={i.icon} /></span>
+                    </>
                   ) : (
                     <Icon name={i.icon} />
                   )}
