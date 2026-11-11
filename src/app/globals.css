@@ -540,7 +540,7 @@ select { appearance: none; padding-right: 40px; background-image: url("data:imag
 }
 
 /* ---------- Dashboard shell ---------- */
-.shell { display: grid; grid-template-columns: 1fr; min-height: calc(100vh - var(--nav-h)); }
+.shell { display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100vh - var(--nav-h)); }
 @media (min-width: 1000px) { .shell { grid-template-columns: 248px minmax(0, 1fr); } }
 .sidebar { background: var(--forest); color: rgba(255, 255, 255, 0.82); padding: 24px 16px; }
 .sidebar-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); padding: 0 12px 10px; }
@@ -664,7 +664,8 @@ input.readonly { background: var(--canvas); color: var(--muted); }
 @media (max-width: 640px) { .hide-sm { display: none; } }
 
 /* ---------- Tables ---------- */
-.table-wrap { overflow-x: auto; margin: 0 -4px; }
+/* position: relative keeps absolutely positioned children (e.g. .sr-only headers) inside the scroll area */
+.table-wrap { position: relative; overflow-x: auto; margin: 0 -4px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
