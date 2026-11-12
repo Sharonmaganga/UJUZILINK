@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import PasswordInput from "@/components/PasswordInput";
+import AuthFormContainer from "@/components/auth/AuthFormContainer";
+import AuthInput from "@/components/auth/AuthInput";
+import AuthButton from "@/components/auth/AuthButton";
 import { homeForRole } from "@/lib/routing";
 
 export default function LoginForm({ callbackUrl, registered }: { callbackUrl: string | null; registered: boolean }) {
@@ -39,33 +42,38 @@ export default function LoginForm({ callbackUrl, registered }: { callbackUrl: st
 
   return (
     // method="post" so a submit before hydration can never put credentials in the URL
-    <form className="auth-card" onSubmit={onSubmit} method="post">
-      <div>
-        <h1>Log in</h1>
-        <p className="muted" style={{ margin: "8px 0 0" }}>
+    <AuthFormContainer
+      heading="Log in"
+      subtitle={
+        <>
           New to Ujuzi Link? <Link href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="link">Create a free account</Link>
-        </p>
-      </div>
+        </>
+      }
+      onSubmit={onSubmit}
+      method="post"
+    >
       {registered && (
         <div className="alert ok" role="status"><Icon name="check" /><p style={{ margin: 0 }}>Account created. Log in to continue.</p></div>
       )}
       {error && (
         <div className="alert" role="alert"><Icon name="alert" /><p style={{ margin: 0 }}>{error}</p></div>
       )}
-      <label className="field">
-        <span>Email</span>
-        <div className="input-wrap has-icon">
-          <Icon name="mail" className="input-icon" />
-          <input name="email" type="email" required autoComplete="email" inputMode="email" placeholder="Enter your email address" aria-invalid={!!error} />
-        </div>
-      </label>
-      <label className="field">
-        <span>Password</span>
-        <PasswordInput name="password" required autoComplete="current-password" placeholder="Enter your password" aria-invalid={!!error} />
-      </label>
-      <button className="btn lg block" disabled={loading}>
-        {loading ? <><Icon name="loader" className="spin" /> Logging in…</> : "Log in"}
-      </button>
-    </form>
+      <AuthInput
+        label="Email"
+        icon="mail"
+        name="email"
+        type="email"
+        required
+        autoComplete="email"
+        inputMode="email"
+        placeholder="Enter your email address"
+        aria-invalid={!!error}
+      />
+      <AuthInput
+        label="Password"
+        control={<PasswordInput name="password" required autoComplete="current-password" placeholder="Enter your password" aria-invalid={!!error} />}
+      />
+      <AuthButton loading={loading} loadingLabel="Logging in…">Log in</AuthButton>
+    </AuthFormContainer>
   );
 }

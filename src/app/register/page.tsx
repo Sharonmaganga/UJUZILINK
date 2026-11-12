@@ -17,8 +17,8 @@ export default async function RegisterPage({
 
   return (
     <AuthLayout
-      title="Great skills are closer than you think."
-      body="Join free to contact verified teachers near you, or list your own skill and start teaching."
+      title="Your next chapter starts with a skill."
+      body="Join Ujuzi Link to discover verified teachers near you or share your skills with your community."
     >
       <RegisterForm initialRole={role === "TEACHER" ? "TEACHER" : "LEARNER"} callbackUrl={safeCallback(callbackUrl)} />
     </AuthLayout>
