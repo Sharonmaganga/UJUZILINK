@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useGoogleMaps } from "./useGoogleMaps";
+import Icon from "./Icon";
 
 type LatLng = { lat: number; lng: number };
 const NAIROBI: LatLng = { lat: -1.2864, lng: 36.8172 };
@@ -58,7 +59,8 @@ export default function MapPicker({ value, onChange }: { value: LatLng | null; o
     <div className="stack" style={{ gap: 8 }}>
       <div className="row">
         <button type="button" className="btn secondary" onClick={useMyLocation} disabled={locating}>
-          {locating ? "Finding you..." : "Use my current location"}
+          <Icon name={locating ? "loader" : "locate"} className={locating ? "spin" : undefined} />
+          {locating ? "Finding you…" : "Use my current location"}
         </button>
         {value && (
           <span className="small muted">

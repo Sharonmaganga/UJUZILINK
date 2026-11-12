@@ -14,6 +14,9 @@ type StkCallback = {
   };
 };
 
+/** Daraja result code when the customer dismisses the STK prompt. */
+const CANCELLED_BY_USER = 1032;
+
 /** Safaricom calls this after the teacher completes (or cancels) the STK push. */
 export async function POST(req: Request) {
   const token = new URL(req.url).searchParams.get("token");
@@ -31,7 +34,7 @@ export async function POST(req: Request) {
   // Ignore unknown or already-processed payments (Safaricom may retry).
   if (!payment || payment.status !== "PENDING") return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
 
-  if (cb.ResultCode === 0) {
+  if (Number(cb.ResultCode) === 0) {
     const items = cb.CallbackMetadata?.Item ?? [];
     const receipt = items.find((i) => i.Name === "MpesaReceiptNumber")?.Value;
     const amount = Number(items.find((i) => i.Name === "Amount")?.Value ?? 0);
@@ -55,7 +58,7 @@ export async function POST(req: Request) {
   } else {
     await prisma.payment.updateMany({
       where: { id: payment.id, status: "PENDING" },
-      data: { status: "FAILED", resultDesc: cb.ResultDesc },
+      data: { status: Number(cb.ResultCode) === CANCELLED_BY_USER ? "CANCELLED" : "FAILED", resultDesc: cb.ResultDesc },
     });
   }
 

@@ -24,6 +24,7 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+  CANCELLED // the teacher dismissed the M-Pesa prompt
 }
 
 model User {
@@ -35,6 +36,36 @@ model User {
   role         Role            @default(LEARNER)
   createdAt    DateTime        @default(now())
   teacher      TeacherProfile?
+  draft        TeacherDraft?
+  auditLogs    AuditLog[]
+}
+
+/// Work-in-progress verification ("save and continue"). Becomes the TeacherProfile on final submission, then is deleted.
+model TeacherDraft {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data              Json     @default("{}") // text fields entered so far
+  idPhotoUrl        String?
+  profilePhotoUrl   String?
+  premisesPhotoUrls String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/// Append-only record of admin decisions (approve, reject, revoke) for accountability.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   // e.g. "teacher.approve"
+  targetType String   // e.g. "TeacherProfile"
+  targetId   String
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
 }
 
 model TeacherProfile {

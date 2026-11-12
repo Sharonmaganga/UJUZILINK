@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { saveImage, UploadError } from "@/lib/upload";
+import { assertImage, MAX_PREMISES_PHOTOS, saveImage, UploadError } from "@/lib/upload";
 import { normaliseKenyanPhone } from "@/lib/phone";
 
 const fields = z.object({
@@ -16,6 +16,8 @@ const fields = z.object({
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
   idNumber: z.string().trim().min(5, "Enter your national ID or passport number"),
+  // Optional: the wizard lets teachers correct their legal name, which is stored on the user account.
+  name: z.string().trim().min(2, "Enter your full name").max(100).optional(),
 });
 
 function file(form: FormData, key: string): File | null {
@@ -39,20 +41,33 @@ export async function POST(req: Request) {
   if (!phone) return NextResponse.json({ error: "Enter a valid Kenyan phone number" }, { status: 400 });
   const whatsapp = d.whatsapp ? normaliseKenyanPhone(d.whatsapp) : null;
 
-  const existing = await prisma.teacherProfile.findUnique({ where: { userId: session.user.id } });
+  const [existing, draft] = await Promise.all([
+    prisma.teacherProfile.findUnique({ where: { userId: session.user.id } }),
+    prisma.teacherDraft.findUnique({ where: { userId: session.user.id } }),
+  ]);
 
   try {
     const idPhoto = file(form, "idPhoto");
     const profilePhoto = file(form, "profilePhoto");
     const premises = form.getAll("premisesPhotos").filter((v): v is File => v instanceof File && v.size > 0);
 
-    if (premises.length > 6) return NextResponse.json({ error: "Upload at most 6 premises photos" }, { status: 400 });
+    if (premises.length > MAX_PREMISES_PHOTOS) {
+      return NextResponse.json({ error: `Upload at most ${MAX_PREMISES_PHOTOS} premises photos` }, { status: 400 });
+    }
 
-    const idPhotoUrl = idPhoto ? await saveImage(idPhoto, "ids") : existing?.idPhotoUrl;
-    const profilePhotoUrl = profilePhoto ? await saveImage(profilePhoto, "profiles") : existing?.profilePhotoUrl;
+    // Validate every file before writing any, so a bad photo doesn't leave orphaned uploads behind.
+    await Promise.all([idPhoto, profilePhoto, ...premises].filter((f): f is File => !!f).map(assertImage));
+
+    // Photo precedence: uploaded with this request > saved in the wizard draft > already on the profile.
+    const idPhotoUrl = idPhoto ? await saveImage(idPhoto, "ids") : draft?.idPhotoUrl ?? existing?.idPhotoUrl;
+    const profilePhotoUrl = profilePhoto
+      ? await saveImage(profilePhoto, "profiles")
+      : draft?.profilePhotoUrl ?? existing?.profilePhotoUrl;
     const premisesPhotoUrls = premises.length
       ? await Promise.all(premises.map((p) => saveImage(p, "premises")))
-      : existing?.premisesPhotoUrls ?? [];
+      : draft?.premisesPhotoUrls.length
+        ? draft.premisesPhotoUrls
+        : existing?.premisesPhotoUrls ?? [];
 
     if (!idPhotoUrl) return NextResponse.json({ error: "Upload a photo of your ID" }, { status: 400 });
     if (!profilePhotoUrl) return NextResponse.json({ error: "Upload a profile photo of yourself" }, { status: 400 });
@@ -83,12 +98,14 @@ export async function POST(req: Request) {
       rejectionReason: null,
     };
 
-    await prisma.teacherProfile.upsert({
-      where: { userId: session.user.id },
-      create: { userId: session.user.id, ...data },
-      update: data,
+    const userId = session.user.id;
+    await prisma.$transaction(async (tx) => {
+      await tx.teacherProfile.upsert({ where: { userId }, create: { userId, ...data }, update: data });
+      if (d.name) await tx.user.update({ where: { id: userId }, data: { name: d.name } });
+      // The draft has become the profile.
+      if (draft) await tx.teacherDraft.delete({ where: { userId } });
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, status: data.status });
   } catch (e) {
     if (e instanceof UploadError) return NextResponse.json({ error: e.message }, { status: 400 });
     throw e;
