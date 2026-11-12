@@ -865,12 +865,14 @@ body:has(.auth) .nav, body:has(.auth) .footer { display: none; }
 
 .auth-aside { display: none; position: relative; overflow: hidden; background: var(--forest-900); color: #fff; }
 @media (min-width: 960px) { .auth-aside { display: block; } }
-.auth-photo { position: absolute; inset: 0; background-size: cover; background-position: 62% 30%; background-repeat: no-repeat; }
+/* Cover-fit; the horizontal focal point keeps both faces right of the copy (the teacher near 60%, the learner near 90% of the panel) */
+.auth-photo { position: absolute; inset: 0; background-size: cover; background-position: 33% 30%; background-repeat: no-repeat; }
+@media (min-width: 960px) and (max-width: 1199px) { .auth-photo { background-position: 52% 30%; } }
 .auth-aside.has-photo::before {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   /* strong forest green behind the copy on the left, fading out so the people stay clear on the right */
   background:
-    linear-gradient(90deg, rgba(10, 65, 47, 0.97) 0%, rgba(10, 65, 47, 0.9) 22%, rgba(10, 65, 47, 0.5) 44%, rgba(10, 65, 47, 0.06) 66%, rgba(10, 65, 47, 0) 80%),
+    linear-gradient(90deg, rgba(10, 65, 47, 0.97) 0%, rgba(10, 65, 47, 0.9) 24%, rgba(10, 65, 47, 0.5) 40%, rgba(10, 65, 47, 0.08) 56%, rgba(10, 65, 47, 0) 66%),
     linear-gradient(0deg, rgba(8, 40, 30, 0.4) 0%, rgba(8, 40, 30, 0) 30%);
 }
 .auth-aside-grid { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; padding: clamp(20px, 4.4vh, 52px) clamp(28px, 4.2vw, 80px) clamp(24px, 6vh, 72px); }
